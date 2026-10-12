@@ -1,12 +1,12 @@
 import SwiftData
 import SwiftUI
 
-/// Adds a new meal, or edits `meal` when one is passed in.
+/// Enters a new meal and opens its preview, or edits `meal` when one is passed in.
 struct MealFormView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     private let meal: Meal?
+    @State private var previewDraft: MealDraft?
 
     @State private var name: String
     @State private var category: MealCategory
@@ -41,14 +41,6 @@ struct MealFormView: View {
         if trimmed.isEmpty { return 0 }
         guard let value = try? Double(trimmed, format: .number), value >= 0 else { return nil }
         return value
-    }
-
-    private var canSave: Bool {
-        !trimmedName.isEmpty
-            && calories != nil
-            && grams(from: proteinText) != nil
-            && grams(from: carbsText) != nil
-            && grams(from: fatText) != nil
     }
 
     var body: some View {
@@ -86,9 +78,17 @@ struct MealFormView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save", action: save)
-                        .disabled(!canSave)
+                    if meal == nil {
+                        Button("Preview") { previewDraft = draft }
+                            .disabled(draft == nil)
+                    } else {
+                        Button("Save", action: saveEdits)
+                            .disabled(draft == nil)
+                    }
                 }
+            }
+            .navigationDestination(item: $previewDraft) { draft in
+                MealPreviewView(draft: draft, onFinish: { dismiss() })
             }
         }
     }
@@ -111,29 +111,25 @@ struct MealFormView: View {
         }
     }
 
-    private func save() {
-        guard canSave, let calories else { return }
-        let protein = grams(from: proteinText) ?? 0
-        let carbs = grams(from: carbsText) ?? 0
-        let fat = grams(from: fatText) ?? 0
+    /// The entered values, or nil while any field is invalid.
+    private var draft: MealDraft? {
+        guard !trimmedName.isEmpty,
+              let calories,
+              let protein = grams(from: proteinText),
+              let carbs = grams(from: carbsText),
+              let fat = grams(from: fatText)
+        else { return nil }
+        return MealDraft(name: trimmedName, category: category, calories: calories, protein: protein, carbs: carbs, fat: fat)
+    }
 
-        if let meal {
-            meal.name = trimmedName
-            meal.category = category
-            meal.calories = calories
-            meal.protein = protein
-            meal.carbs = carbs
-            meal.fat = fat
-        } else {
-            modelContext.insert(Meal(
-                name: trimmedName,
-                category: category,
-                calories: calories,
-                protein: protein,
-                carbs: carbs,
-                fat: fat
-            ))
-        }
+    private func saveEdits() {
+        guard let meal, let draft else { return }
+        meal.name = draft.name
+        meal.category = draft.category
+        meal.calories = draft.calories
+        meal.protein = draft.protein
+        meal.carbs = draft.carbs
+        meal.fat = draft.fat
         dismiss()
     }
 }

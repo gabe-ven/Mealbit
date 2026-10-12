@@ -28,6 +28,23 @@ final class Meal {
     var fat: Double
     var date: Date
 
+    static func loggedToday() -> Predicate<Meal> {
+        let startOfToday = Calendar.current.startOfDay(for: .now)
+        let startOfTomorrow = Calendar.current.date(byAdding: .day, value: 1, to: startOfToday)!
+        return #Predicate<Meal> { $0.date >= startOfToday && $0.date < startOfTomorrow }
+    }
+
+    convenience init(draft: MealDraft) {
+        self.init(
+            name: draft.name,
+            category: draft.category,
+            calories: draft.calories,
+            protein: draft.protein,
+            carbs: draft.carbs,
+            fat: draft.fat
+        )
+    }
+
     init(
         name: String,
         category: MealCategory,

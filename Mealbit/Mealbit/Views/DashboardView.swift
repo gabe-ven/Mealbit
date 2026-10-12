@@ -12,12 +12,7 @@ struct DashboardView: View {
     @State private var editingMeal: Meal?
 
     init() {
-        let startOfToday = Calendar.current.startOfDay(for: .now)
-        let startOfTomorrow = Calendar.current.date(byAdding: .day, value: 1, to: startOfToday)!
-        _meals = Query(
-            filter: #Predicate<Meal> { $0.date >= startOfToday && $0.date < startOfTomorrow },
-            sort: \.date
-        )
+        _meals = Query(filter: Meal.loggedToday(), sort: \.date)
     }
 
     private var caloriesEaten: Int { meals.reduce(0) { $0 + $1.calories } }
