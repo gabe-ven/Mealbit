@@ -4,7 +4,11 @@ import SwiftUI
 struct DashboardView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var meals: [Meal]
+    @AppStorage(NutritionGoals.caloriesKey) private var calorieGoal = NutritionGoals.defaultCalories
+    @AppStorage(NutritionGoals.proteinKey) private var proteinGoal = NutritionGoals.defaultProtein
+    @AppStorage(NutritionGoals.hasSetGoalsKey) private var hasSetGoals = false
     @State private var isAddingMeal = false
+    @State private var isEditingGoals = false
     @State private var editingMeal: Meal?
 
     init() {
@@ -25,13 +29,13 @@ struct DashboardView: View {
         NavigationStack {
             List {
                 Section {
-                    CalorieSummaryCard(consumed: caloriesEaten, goal: NutritionGoals.calories)
+                    CalorieSummaryCard(consumed: caloriesEaten, goal: calorieGoal)
                 }
 
-                Section("Macros") {
-                    MacroProgressRow(name: "Protein", consumed: proteinEaten, goal: NutritionGoals.protein, color: .blue)
-                    MacroProgressRow(name: "Carbs", consumed: carbsEaten, goal: NutritionGoals.carbs, color: .orange)
-                    MacroProgressRow(name: "Fat", consumed: fatEaten, goal: NutritionGoals.fat, color: .pink)
+                Section {
+                    MacroProgressRow(name: "Protein", consumed: proteinEaten, goal: Double(proteinGoal), color: .blue)
+                    gramsRow("Carbs", carbsEaten)
+                    gramsRow("Fat", fatEaten)
                 }
 
                 if meals.isEmpty {
@@ -64,6 +68,11 @@ struct DashboardView: View {
             }
             .navigationTitle("Today")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Daily Goals", systemImage: "target") {
+                        isEditingGoals = true
+                    }
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button("Add Meal", systemImage: "plus") {
                         isAddingMeal = true
@@ -76,6 +85,21 @@ struct DashboardView: View {
             .sheet(item: $editingMeal) { meal in
                 MealFormView(meal: meal)
             }
+            .sheet(isPresented: $isEditingGoals) {
+                GoalsView()
+            }
+            .onAppear {
+                if !hasSetGoals {
+                    isEditingGoals = true
+                }
+            }
+        }
+    }
+
+    private func gramsRow(_ name: String, _ grams: Double) -> some View {
+        LabeledContent(name) {
+            Text("\(grams, format: .number.precision(.fractionLength(0))) g")
+                .monospacedDigit()
         }
     }
 }

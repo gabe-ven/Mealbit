@@ -1,9 +1,15 @@
 import Foundation
 
-/// Fixed daily targets. Personalized goals are out of MVP scope.
+/// Storage keys, defaults, and allowed ranges for the user's daily goals.
+/// The goals themselves are stored with `@AppStorage`.
 enum NutritionGoals {
-    static let calories = 2000
-    static let protein = 150.0
-    static let carbs = 200.0
-    static let fat = 65.0
+    static let caloriesKey = "calorieGoal"
+    static let proteinKey = "proteinGoal"
+    static let hasSetGoalsKey = "hasSetGoals"
+
+    static let defaultCalories = 2000
+    static let defaultProtein = 150
+
+    static let calorieRange = 800...6000
+    static let proteinRange = 10...400
 }
