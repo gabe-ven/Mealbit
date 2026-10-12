@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Xcode user-specific and build files
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+
+# Secrets (API keys must never be committed)
+.env
+*.secret
+Secrets.xcconfig
