@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-Mealbit is a native iOS nutrition-tracking app built with Swift and SwiftUI for UC Davis ECS 191.
+Mealbit is a native iOS nutrition decision assistant built with Swift and SwiftUI for UC Davis ECS 191.
 
-The app helps users track calories and macronutrients with minimal effort. Its main differentiator is simple food logging, including AI-assisted meal recognition from photos.
+The app helps students and gym-goers decide what to eat *before* eating it. The user photographs a potential meal, reviews an AI estimate, and sees how it would affect their remaining calorie and protein goals. They can adjust portions and then log or discard the meal. The interactive meal preview is the main differentiator; manual logging and the daily dashboard are supporting features.
 
 Read `PROJECT.md` before implementing features to understand the project's goals, scope, and user experience.
 
@@ -14,7 +14,7 @@ Read `PROJECT.md` before implementing features to understand the project's goals
 - **UI Framework:** SwiftUI
 - **Local Storage:** SwiftData
 - **IDE:** Xcode
-- **AI Integration:** Vision-capable LLM API (provider to be determined)
+- **AI Integration:** Claude (Anthropic API) vision model, called through a small backend proxy
 - **Target Platform:** iOS
 
 Use native Apple frameworks whenever possible.
@@ -48,7 +48,7 @@ Do not introduce React Native, Flutter, or web-based UI frameworks.
 
 ### 4. UI/UX Guidelines
 - Use a clean, minimal design.
-- Prioritize ease of use and fast meal logging.
+- Prioritize a fast path from photo to meal preview.
 - Follow Apple's Human Interface Guidelines.
 - Use consistent spacing, typography, and colors.
 - Keep navigation simple.
@@ -59,14 +59,17 @@ Do not introduce React Native, Flutter, or web-based UI frameworks.
 
 Implement features according to `PROJECT.md`.
 
-The initial MVP includes:
+The MVP includes:
 
-1. **Dashboard:** Daily calorie and macro progress.
-2. **Manual Logging:** Add meals with nutritional information.
-3. **AI Photo Logging:** Estimate meal information from a picture.
-4. **Meal Management:** View, edit, and delete logged meals.
+1. **Daily Goals:** User-set calorie and protein goals.
+2. **Meal Preview (main feature):** Show a meal's impact on remaining goals before logging, with a short plain-language explanation of how it fits, and portion and ingredient adjustments.
+3. **AI Photo Estimation:** Estimate a meal and its components from a picture.
+4. **Manual Entry (supporting):** Enter nutrition values, then open the same preview.
+5. **Dashboard and Meal Management (supporting):** Daily progress; view, edit, and delete logged meals.
 
-Do not implement features outside the MVP unless explicitly requested.
+Do not implement features outside the MVP unless explicitly requested. Side-by-side meal comparison is a stretch goal; do not build it until the meal-preview workflow is complete and tested.
+
+Generate the goal-fit explanation on the device from the preview numbers using simple rules, not with an AI call.
 
 ## Data Management
 
@@ -82,13 +85,16 @@ Do not implement features outside the MVP unless explicitly requested.
   - Fat
   - Date and time
 - Calculate daily totals from saved meals rather than maintaining duplicate totals.
+- Store daily goals as simple on-device settings (`@AppStorage`), not in SwiftData.
+- A meal preview is temporary, in-memory state. Save a `Meal` only when the user taps Log; discarding a preview must leave no saved data.
 
 ## AI Integration
 
 - Test the selected vision API before integrating it into the main app.
-- AI should estimate meal names, calories, protein, carbohydrates, and fat.
-- Treat AI-generated nutritional information as estimates, not facts.
-- Always allow users to review and edit results before saving.
+- AI should estimate the meal name and its main components, each with an estimated quantity, calories, protein, carbohydrates, and fat.
+- Make one AI request per photo. Recalculate portion and ingredient adjustments on the device by scaling; never call the AI again for them.
+- Treat AI-generated nutritional information as estimates, not facts, and label nutrition values as approximate in the UI.
+- Always allow users to review and edit results before logging.
 - Handle unclear images, network failures, and invalid API responses.
 - Never hardcode API secrets in the iOS application or commit them to Git.
 - Prefer a small backend proxy for requests requiring a secret API key.
@@ -131,7 +137,7 @@ This is a course project, not a production application.
 
 Prioritize:
 1. A working native iOS application
-2. A complete core user flow
+2. A complete, testable meal-preview workflow over additional features
 3. Simple, intuitive UI
 4. Reliable local persistence
 5. Maintainable code
