@@ -148,7 +148,7 @@ struct SpeechBubble: View {
 
 #Preview {
     VStack(spacing: 20) {
-        SpeechBubble(text: "Bit is hungry. Let’s check your first meal! 🍴")
+        SpeechBubble(text: "Bit is hungry. Let’s check your first meal!")
         HStack {
             BitView(mood: .hungry, size: 90)
             BitView(mood: .happy, size: 90, sparkle: true)

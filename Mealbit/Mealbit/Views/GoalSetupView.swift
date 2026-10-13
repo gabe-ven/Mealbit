@@ -63,11 +63,11 @@ struct GoalSetupView: View {
 
             VStack(spacing: 14) {
                 GoalStepperCard(
-                    title: "Daily calories", dot: Theme.blue, value: $calories, unit: "kcal",
+                    title: "Daily calories", icon: .calories, value: $calories, unit: "kcal",
                     range: NutritionGoals.calorieRange, step: 50
                 )
                 GoalStepperCard(
-                    title: "Daily protein", dot: Theme.orange, value: $protein, unit: "g",
+                    title: "Daily protein", icon: .protein, value: $protein, unit: "g",
                     range: NutritionGoals.proteinRange, step: 5
                 )
             }

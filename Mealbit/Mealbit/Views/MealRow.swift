@@ -6,10 +6,7 @@ struct MealRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(meal.category.emoji)
-                .font(.system(size: 24))
-                .frame(width: 52, height: 52)
-                .background(Theme.soft, in: .rect(cornerRadius: 14))
+            IconBadge(meal.category.icon, size: 22, box: 52)
             VStack(alignment: .leading, spacing: 2) {
                 Text(meal.name)
                     .font(.rounded(14, .heavy))
@@ -36,17 +33,6 @@ struct MealRow: View {
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(isHighlighted ? Theme.blue : .clear, lineWidth: 2))
         .contentShape(.rect)
         .accessibilityElement(children: .combine)
-    }
-}
-
-extension MealCategory {
-    var emoji: String {
-        switch self {
-        case .breakfast: "🥣"
-        case .lunch: "🌯"
-        case .dinner: "🍽️"
-        case .snack: "🍎"
-        }
     }
 }
 

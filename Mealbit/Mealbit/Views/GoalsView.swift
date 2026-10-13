@@ -12,11 +12,11 @@ struct GoalsView: View {
             VStack(spacing: 14) {
                 SheetHeader(title: "Daily Goals") { dismiss() }
                 GoalStepperCard(
-                    title: "🔥 Daily calories", dot: Theme.blue, value: $calorieGoal, unit: "kcal",
+                    title: "Daily calories", icon: .calories, value: $calorieGoal, unit: "kcal",
                     range: NutritionGoals.calorieRange, step: 50
                 )
                 GoalStepperCard(
-                    title: "💪 Daily protein", dot: Theme.orange, value: $proteinGoal, unit: "g",
+                    title: "Daily protein", icon: .protein, value: $proteinGoal, unit: "g",
                     range: NutritionGoals.proteinRange, step: 5
                 )
                 Text("Changes apply right away.")

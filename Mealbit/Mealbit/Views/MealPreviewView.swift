@@ -47,12 +47,12 @@ struct MealPreviewView: View {
                 header
                 titleBlock
                 HStack(spacing: 10) {
-                    statTile(emoji: "🔥", value: "≈\(meal.calories.formatted())", label: "calories")
-                    statTile(emoji: "💪", value: "≈\(Int(meal.protein.rounded()))g", label: "protein")
+                    statTile(icon: .calories, value: "≈\(meal.calories.formatted())", label: "calories")
+                    statTile(icon: .protein, value: "≈\(Int(meal.protein.rounded()))g", label: "protein")
                 }
                 verdictCard
                 fitCard
-                Text(footnote)
+                Label { Text(footnote) } icon: { Icon(.info, size: 12, color: Theme.mute) }
                     .font(.rounded(12, .bold))
                     .foregroundStyle(Theme.mute)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -65,7 +65,7 @@ struct MealPreviewView: View {
                 Button {
                     isEditing = true
                 } label: {
-                    Label("Edit Meal", systemImage: "pencil")
+                    Label { Text("Edit Meal") } icon: { Icon(.pencil, size: 19) }
                 }
                 .buttonStyle(SecondaryButtonStyle())
             }
@@ -88,19 +88,18 @@ struct MealPreviewView: View {
             FilledImage(image: Image(uiImage: photo), height: 138)
                 .clipShape(.rect(cornerRadius: 24))
                 .overlay(alignment: .topTrailing) {
-                    chip("✨ Estimate", foreground: .white, background: Theme.ink.opacity(0.7))
+                    chip("Estimate", icon: .sparkles, foreground: .white, background: Theme.ink.opacity(0.7))
                         .environment(\.colorScheme, .light)
                         .padding(10)
                 }
                 .accessibilityHidden(true)
         } else {
-            Text("🍽️")
-                .font(.system(size: 46))
+            IconBadge(.meals, size: 36, box: 72)
                 .frame(maxWidth: .infinity)
                 .frame(height: 110)
                 .background(Theme.soft, in: .rect(cornerRadius: 24))
                 .overlay(alignment: .topTrailing) {
-                    chip("Entered by you", foreground: Theme.blue, background: Theme.card)
+                    chip("Entered by you", icon: .pencil, foreground: Theme.blue, background: Theme.card)
                         .padding(10)
                 }
                 .accessibilityHidden(true)
@@ -121,9 +120,9 @@ struct MealPreviewView: View {
         .padding(.top, 4)
     }
 
-    private func statTile(emoji: String, value: String, label: String) -> some View {
+    private func statTile(icon: AppIcon, value: String, label: String) -> some View {
         HStack(spacing: 10) {
-            Text(emoji).font(.system(size: 28))
+            IconBadge(icon, size: 22, box: 44)
             VStack(alignment: .leading, spacing: 0) {
                 Text(value)
                     .font(.rounded(24, .black))
@@ -169,12 +168,12 @@ struct MealPreviewView: View {
                 .font(.rounded(15, .black))
                 .foregroundStyle(Theme.ink)
             fitRow(
-                emoji: "🔥", title: "Calories",
+                icon: .calories, title: "Calories",
                 total: (eatenCalories + meal.calories).formatted(), goal: "\(calorieGoal.formatted()) cal"
             )
             StackedBar(goal: Double(calorieGoal), eaten: Double(eatenCalories), meal: Double(meal.calories), showsOver: true)
             fitRow(
-                emoji: "💪", title: "Protein",
+                icon: .protein, title: "Protein",
                 total: Int((eatenProtein + meal.protein).rounded()).formatted(), goal: "\(proteinGoal)g"
             )
             StackedBar(goal: Double(proteinGoal), eaten: eatenProtein, meal: meal.protein, showsOver: false)
@@ -189,9 +188,9 @@ struct MealPreviewView: View {
         .cardStyle()
     }
 
-    private func fitRow(emoji: String, title: String, total: String, goal: String) -> some View {
+    private func fitRow(icon: AppIcon, title: String, total: String, goal: String) -> some View {
         HStack(spacing: 8) {
-            Text(emoji).font(.system(size: 16))
+            Icon(icon, size: 16)
             Text(title)
                 .font(.rounded(15, .heavy))
                 .foregroundStyle(Theme.ink)
@@ -212,8 +211,9 @@ struct MealPreviewView: View {
         }
     }
 
-    private func chip(_ text: String, foreground: Color, background: Color) -> some View {
-        Text(text)
+    private func chip(_ text: String, icon: AppIcon, foreground: Color, background: Color) -> some View {
+        Label { Text(text) } icon: { Icon(icon, size: 11, color: foreground) }
+            .labelStyle(.titleAndIcon)
             .font(.rounded(12, .heavy))
             .foregroundStyle(foreground)
             .padding(.horizontal, 10)
@@ -233,11 +233,11 @@ struct MealPreviewView: View {
 
     private var footnote: String {
         if draft.isLowConfidence {
-            return "ⓘ Bit wasn't sure about this photo. Check the items in Edit Meal before adding it."
+            return "Bit wasn't sure about this photo. Check the items in Edit Meal before adding it."
         }
         let source = photo == nil ? "Based on what you entered" : "Estimated from your photo"
         let edits = draft.components.contains(where: \.isEdited) ? ", with your edits" : ""
-        return "ⓘ \(source)\(edits). Tap Edit Meal to adjust the portion or items."
+        return "\(source)\(edits). Tap Edit Meal to adjust the portion or items."
     }
 
     private func log() {

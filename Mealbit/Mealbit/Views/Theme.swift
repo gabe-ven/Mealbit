@@ -16,7 +16,10 @@ enum Theme {
     static let ink = Color(light: 0x0F2547, dark: 0xEEF4FF)
     static let mute = Color(light: 0x5A6B88, dark: 0x9DB0CF)
 
-    static let orange = Color(light: 0xFF9F1C, dark: 0xFFAA3B)
+    /// Icon colors for calories, protein, and meals.
+    static let calories = Color(light: 0xFF794A, dark: 0xFF794A)
+    static let protein = Color(light: 0xF3B536, dark: 0xF3B536)
+    static let meals = Color(light: 0x3985F6, dark: 0x5A9BFF)
     static let orangeSoft = Color(light: 0xFFD9A3, dark: 0x6B4A1E)
     static let amber = Color(light: 0xFFB547, dark: 0xE6A23C)
     static let amberBackground = Color(light: 0xFFF4DF, dark: 0x3A2E17)
@@ -330,7 +333,7 @@ struct SheetHeader: View {
 /// A daily goal with minus and plus buttons.
 struct GoalStepperCard: View {
     let title: String
-    let dot: Color
+    let icon: AppIcon
     @Binding var value: Int
     let unit: String
     let range: ClosedRange<Int>
@@ -339,7 +342,7 @@ struct GoalStepperCard: View {
     var body: some View {
         VStack(spacing: 10) {
             HStack(spacing: 8) {
-                Circle().fill(dot).frame(width: 10, height: 10)
+                IconBadge(icon, size: 16, box: 30)
                 Text(title)
                     .font(.rounded(15, .heavy))
                     .foregroundStyle(Theme.mute)

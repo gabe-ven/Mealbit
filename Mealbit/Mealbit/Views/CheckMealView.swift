@@ -65,7 +65,7 @@ struct CheckMealView: View {
                 isShowingCamera = CameraPicker.isAvailable
                 isShowingLibrary = !CameraPicker.isAvailable
             } label: {
-                Label("Use Camera", systemImage: "camera.fill")
+                Label { Text("Use Camera") } icon: { Icon(.camera, size: 20, color: .white) }
             }
             .buttonStyle(PrimaryButtonStyle())
             .padding(.top, 28)
@@ -73,14 +73,14 @@ struct CheckMealView: View {
             Button {
                 isShowingLibrary = true
             } label: {
-                Label("Choose Photo", systemImage: "photo")
+                Label { Text("Choose Photo") } icon: { Icon(.photo, size: 20) }
             }
             .buttonStyle(SecondaryButtonStyle(height: 56))
             .padding(.top, 12)
 
             Spacer(minLength: 16)
 
-            Text("✨ Works with any meal")
+            Label { Text("Works with any meal") } icon: { Icon(.sparkles, size: 14) }
                 .font(.rounded(14, .heavy))
                 .foregroundStyle(Theme.ink)
             Text("Bowls, sandwiches, snacks, and more!")

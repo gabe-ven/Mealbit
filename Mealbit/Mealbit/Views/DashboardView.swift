@@ -30,24 +30,24 @@ struct DashboardView: View {
                 VStack(spacing: 12) {
                     bitBlock
                     goalCard(
-                        emoji: "🔥", title: "Calories", eaten: caloriesEaten.formatted(),
+                        icon: .calories, title: "Calories", eaten: caloriesEaten.formatted(),
                         goal: "\(calorieGoal.formatted()) cal", fraction: calorieFraction
                     )
                     goalCard(
-                        emoji: "💪", title: "Protein", eaten: Int(proteinEaten.rounded()).formatted(),
+                        icon: .protein, title: "Protein", eaten: Int(proteinEaten.rounded()).formatted(),
                         goal: "\(proteinGoal)g", fraction: proteinFraction
                     )
                     Button {
                         open { isCheckingMeal = true }
                     } label: {
-                        Label("Check a Meal", systemImage: "camera.fill")
+                        Label { Text("Check a Meal") } icon: { Icon(.camera, size: 20, color: .white) }
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .padding(.top, 4)
                     Button {
                         open { isEnteringManually = true }
                     } label: {
-                        Label("Log Manually", systemImage: "pencil")
+                        Label { Text("Log Manually") } icon: { Icon(.pencil, size: 19) }
                     }
                     .buttonStyle(SecondaryButtonStyle())
                     todaysMeals
@@ -64,8 +64,7 @@ struct DashboardView: View {
                     Button {
                         open { isEditingGoals = true }
                     } label: {
-                        Image(systemName: "target")
-                            .foregroundStyle(Theme.mute)
+                        Icon(.goals, size: 20)
                     }
                     .accessibilityLabel("Daily Goals")
                 }
@@ -140,7 +139,8 @@ struct DashboardView: View {
         }
         .overlay(alignment: .topLeading) {
             if justAdded == nil && proteinFraction >= 1 {
-                Text("💪 Protein goal hit")
+                Label { Text("Protein goal hit") } icon: { Icon(.protein, size: 13) }
+                    .labelStyle(.titleAndIcon)
                     .font(.rounded(12, .black))
                     .foregroundStyle(Theme.ink)
                     .padding(.horizontal, 10)
@@ -156,22 +156,22 @@ struct DashboardView: View {
     private var bitMessage: String {
         if justAdded != nil {
             let left = calorieGoal - caloriesEaten
-            return left < 0 ? "Yum, added! Today is covered. 🎉" : "Yum, added! \(left.formatted()) cal left today. 🎉"
+            return left < 0 ? "Yum, added! Today is covered." : "Yum, added! \(left.formatted()) cal left today."
         }
-        if calorieFraction <= 0 { return "Bit is hungry. Let’s check your first meal! 🍴" }
-        if calorieFraction < 0.2 { return "Nice start! Bit is waking up. ☀️" }
-        if proteinFraction >= 1 && calorieFraction < 0.7 { return "Protein goal hit! Bit is feeling strong. 💪" }
-        if calorieFraction < 0.7 { return "Nice start! Bit is getting energized. 🎉" }
-        if calorieFraction < 1 { return "Bit is full of energy. Almost there! ⚡" }
-        return "Goal reached! Great tracking today. 🎉"
+        if calorieFraction <= 0 { return "Bit is hungry. Let’s check your first meal!" }
+        if calorieFraction < 0.2 { return "Nice start! Bit is waking up." }
+        if proteinFraction >= 1 && calorieFraction < 0.7 { return "Protein goal hit! Bit is feeling strong." }
+        if calorieFraction < 0.7 { return "Nice start! Bit is getting energized." }
+        if calorieFraction < 1 { return "Bit is full of energy. Almost there!" }
+        return "Goal reached! Great tracking today."
     }
 
     // MARK: - Cards
 
-    private func goalCard(emoji: String, title: String, eaten: String, goal: String, fraction: Double) -> some View {
+    private func goalCard(icon: AppIcon, title: String, eaten: String, goal: String, fraction: Double) -> some View {
         VStack(spacing: 10) {
-            HStack(spacing: 8) {
-                Text(emoji).font(.system(size: 18))
+            HStack(spacing: 10) {
+                IconBadge(icon)
                 Text(title)
                     .font(.rounded(15, .heavy))
                     .foregroundStyle(Theme.ink)
@@ -191,8 +191,8 @@ struct DashboardView: View {
 
     private var todaysMeals: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Text("🍴").font(.system(size: 17))
+            HStack(spacing: 10) {
+                IconBadge(.meals)
                 Text("Today's Meals")
                     .font(.rounded(16, .black))
                     .foregroundStyle(Theme.ink)
@@ -201,10 +201,9 @@ struct DashboardView: View {
 
             if meals.isEmpty {
                 VStack(spacing: 4) {
-                    Text("🥣")
-                        .font(.system(size: 30))
-                        .grayscale(0.6)
+                    IconBadge(.meals, size: 24, box: 48)
                         .opacity(0.7)
+                        .padding(.bottom, 4)
                     Text("No meals yet")
                         .font(.rounded(14, .heavy))
                         .foregroundStyle(Theme.mute)
