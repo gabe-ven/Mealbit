@@ -21,8 +21,8 @@ struct GoalSetupView: View {
                     switch step {
                     case .calories:
                         GoalEntryPage(
-                            title: "Calories",
-                            message: "How many calories do you want to eat each day?",
+                            step: 1,
+                            title: "Daily\ncalories",
                             unit: "kcal",
                             range: NutritionGoals.calorieRange,
                             buttonTitle: "Continue",
@@ -30,9 +30,9 @@ struct GoalSetupView: View {
                         ) { path.append(.protein) }
                     case .protein:
                         GoalEntryPage(
-                            title: "Protein",
-                            message: "How many grams of protein do you want each day?",
-                            unit: "g",
+                            step: 2,
+                            title: "Daily\nprotein",
+                            unit: "grams",
                             range: NutritionGoals.proteinRange,
                             buttonTitle: "Done",
                             text: $proteinText,
@@ -41,25 +41,28 @@ struct GoalSetupView: View {
                     }
                 }
         }
+        .tint(.white)
     }
 
     private var welcomePage: some View {
-        VStack(spacing: 16) {
-            Spacer()
-            Image(systemName: "target")
-                .font(.system(size: 64))
-                .foregroundStyle(.tint)
-            Text("Daily Goals")
-                .font(.largeTitle.bold())
-            Text("Mealbit uses your daily goals to show how a meal would fit your day before you eat it.")
-                .font(.title3)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Spacer()
-        }
-        .padding(.horizontal, 32)
-        .safeAreaInset(edge: .bottom) {
-            ContinueButton(title: "Get Started") { path.append(.calories) }
+        OnboardingPage {
+            VStack(alignment: .leading, spacing: 20) {
+                Spacer()
+                Text("Mealbit")
+                    .font(.title3.weight(.heavy))
+                    .foregroundStyle(.white.opacity(0.7))
+                Text("Know if it fits before you eat it.")
+                    .font(.system(size: 52, weight: .black))
+                    .foregroundStyle(.white)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("Set two daily goals. Then snap any meal to see how it fits.")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.8))
+                Spacer()
+                Spacer()
+            }
+        } button: {
+            OnboardingButton(title: "Get Started") { path.append(.calories) }
         }
     }
 
@@ -73,10 +76,10 @@ struct GoalSetupView: View {
     }
 }
 
-/// One full page with a large number entry for a single goal.
+/// One goal page: a bold title and a very large number to type.
 private struct GoalEntryPage: View {
+    let step: Int
     let title: String
-    let message: String
     let unit: String
     let range: ClosedRange<Int>
     let buttonTitle: String
@@ -93,58 +96,98 @@ private struct GoalEntryPage: View {
     private var isValid: Bool { Self.validNumber(text, in: range) != nil }
 
     var body: some View {
-        VStack(spacing: 12) {
-            Text(title)
-                .font(.largeTitle.bold())
-            Text(message)
-                .font(.title3)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+        OnboardingPage {
+            VStack(alignment: .leading, spacing: 0) {
+                StepIndicator(current: step, total: 2)
+                    .padding(.top, 8)
 
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(title)
+                    .font(.system(size: 52, weight: .black))
+                    .foregroundStyle(.white)
+                    .padding(.top, 32)
+
                 TextField("0", text: $text)
                     .keyboardType(.numberPad)
                     .focused($isFocused)
-                    .font(.system(size: 64, weight: .bold, design: .rounded))
+                    .font(.system(size: 96, weight: .black, design: .rounded))
                     .monospacedDigit()
-                    .multilineTextAlignment(.center)
-                    .fixedSize()
+                    .foregroundStyle(.white)
+                    .minimumScaleFactor(0.5)
+                    .padding(.top, 24)
+
                 Text(unit)
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.7))
+
+                Text(isValid || text.isEmpty
+                     ? "Between \(range.lowerBound) and \(range.upperBound)"
+                     : "Enter a number between \(range.lowerBound) and \(range.upperBound)")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(isValid || text.isEmpty ? 0.6 : 1))
+                    .padding(.top, 16)
+
+                Spacer()
             }
-            .padding(.top, 32)
-
-            Text("Between \(range.lowerBound) and \(range.upperBound) \(unit)")
-                .font(.footnote)
-                .foregroundStyle(!text.isEmpty && !isValid ? .red : .secondary)
-
-            Spacer()
-        }
-        .padding(.horizontal, 32)
-        .padding(.top, 24)
-        .safeAreaInset(edge: .bottom) {
-            ContinueButton(title: buttonTitle, action: onContinue)
+        } button: {
+            OnboardingButton(title: buttonTitle, action: onContinue)
                 .disabled(!isValid)
         }
         .onAppear { isFocused = true }
     }
 }
 
-private struct ContinueButton: View {
+/// Full-screen blue page with content on top and a button pinned at the bottom.
+private struct OnboardingPage<Content: View, ButtonContent: View>: View {
+    @ViewBuilder let content: Content
+    @ViewBuilder let button: ButtonContent
+
+    var body: some View {
+        content
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .padding(.horizontal, 28)
+            .background(Color.brand.ignoresSafeArea())
+            .safeAreaInset(edge: .bottom) {
+                button
+                    .padding(.horizontal, 28)
+                    .padding(.bottom, 12)
+            }
+            .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+    }
+}
+
+private struct OnboardingButton: View {
     let title: String
     let action: () -> Void
+
+    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.headline)
+                .font(.title3.weight(.heavy))
+                .foregroundStyle(Color.brand)
                 .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+                .background(.white, in: .capsule)
+                .opacity(isEnabled ? 1 : 0.5)
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
-        .padding(.horizontal, 24)
-        .padding(.bottom, 8)
+    }
+}
+
+private struct StepIndicator: View {
+    let current: Int
+    let total: Int
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(1...total, id: \.self) { index in
+                Capsule()
+                    .fill(.white.opacity(index <= current ? 1 : 0.3))
+                    .frame(width: 32, height: 6)
+            }
+        }
+        .accessibilityLabel("Step \(current) of \(total)")
     }
 }
 
