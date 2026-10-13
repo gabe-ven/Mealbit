@@ -1,6 +1,7 @@
 import SwiftData
 import SwiftUI
 
+/// Home: how today is going, the way to check the next meal, and what's been logged.
 struct DashboardView: View {
     @Query private var meals: [Meal]
     @AppStorage(NutritionGoals.caloriesKey) private var calorieGoal = NutritionGoals.defaultCalories
@@ -27,39 +28,40 @@ struct DashboardView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 12) {
-                    bitBlock
-                    goalCard(
-                        icon: .calories, title: "Calories", eaten: caloriesEaten.formatted(),
-                        goal: "\(calorieGoal.formatted()) cal", fraction: calorieFraction
-                    )
-                    goalCard(
-                        icon: .protein, title: "Protein", eaten: Int(proteinEaten.rounded()).formatted(),
-                        goal: "\(proteinGoal)g", fraction: proteinFraction
-                    )
-                    Button {
-                        open { isCheckingMeal = true }
-                    } label: {
-                        Label { Text("Check a Meal") } icon: { Icon(.camera, size: 20, color: .white) }
+                VStack(spacing: 16) {
+                    hero
+                    HStack(spacing: 12) {
+                        ringTile(.calories, eaten: caloriesEaten.formatted(), goal: calorieGoal.formatted(),
+                                 label: "Calories", fraction: calorieFraction)
+                        ringTile(.protein, eaten: Int(proteinEaten.rounded()).formatted(), goal: "\(proteinGoal)g",
+                                 label: "Protein", fraction: proteinFraction)
                     }
-                    .buttonStyle(PrimaryButtonStyle())
-                    .padding(.top, 4)
-                    Button {
-                        open { isEnteringManually = true }
-                    } label: {
-                        Label { Text("Log Manually") } icon: { Icon(.pencil, size: 19) }
+                    VStack(spacing: 2) {
+                        Button {
+                            open { isCheckingMeal = true }
+                        } label: {
+                            Label { Text("Check a Meal") } icon: { Icon(.camera, size: 20, color: .white) }
+                        }
+                        .buttonStyle(PrimaryButtonStyle(height: 60, fontSize: 20))
+                        Button {
+                            open { isEnteringManually = true }
+                        } label: {
+                            Label { Text("Log Manually") } icon: { Icon(.pencil, size: 15) }
+                        }
+                        .buttonStyle(TextButtonStyle())
                     }
-                    .buttonStyle(SecondaryButtonStyle())
-                    todaysMeals
+                    mealsSection
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 30)
             }
             .background(Theme.background)
             .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Wordmark(size: 32)
+                ToolbarItem(placement: .topBarLeading) {
+                    Wordmark(size: 30)
+                        .fixedSize()
                 }
+                .sharedBackgroundVisibility(.hidden)
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         open { isEditingGoals = true }
@@ -107,128 +109,176 @@ struct DashboardView: View {
         action()
     }
 
-    // MARK: - Bit
+    // MARK: - Hero
 
-    private var bitBlock: some View {
-        VStack(spacing: 4) {
-            SpeechBubble(text: bitMessage)
-                .frame(maxWidth: 270)
-                .id(bitMessage)
-                .transition(.scale(scale: 0.4).combined(with: .opacity))
+    private var hero: some View {
+        VStack(spacing: 6) {
             BitView(
                 mood: .forCalories(eaten: caloriesEaten, goal: calorieGoal),
                 size: 150,
                 sparkle: proteinFraction >= 0.5 && proteinFraction < 1
             )
-            .padding(.top, 8)
-        }
-        .frame(maxWidth: .infinity)
-        .overlay(alignment: .topTrailing) {
-            if let justAdded {
-                Text("+\(justAdded.calories.formatted()) cal")
-                    .font(.rounded(15, .black))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background {
-                        Capsule().fill(Theme.blue).shadow(color: Theme.blue.opacity(0.3), radius: 7, y: 6)
-                    }
-                    .offset(x: -14, y: 84)
-                    .transition(.scale(scale: 0.4).combined(with: .opacity))
-            }
-        }
-        .overlay(alignment: .topLeading) {
-            if justAdded == nil && proteinFraction >= 1 {
-                Label { Text("Protein goal hit") } icon: { Icon(.protein, size: 13) }
-                    .labelStyle(.titleAndIcon)
-                    .font(.rounded(12, .black))
-                    .foregroundStyle(Theme.ink)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background {
-                        Capsule().fill(Theme.card).shadow(color: Theme.ink.opacity(0.08), radius: 6, y: 4)
-                    }
-                    .offset(x: 10, y: 96)
-            }
+            .frame(maxWidth: .infinity)
+            .background(alignment: .bottom) { HillBackdrop() }
+
+            Text(title)
+                .font(.rounded(28, .black))
+                .foregroundStyle(Theme.ink)
+                .padding(.top, 6)
+            Text(subtitle)
+                .font(.rounded(16, .bold))
+                .foregroundStyle(Theme.ink.opacity(0.8))
+                .multilineTextAlignment(.center)
         }
     }
 
-    private var bitMessage: String {
-        if justAdded != nil {
-            let left = calorieGoal - caloriesEaten
-            return left < 0 ? "Yum, added! Today is covered." : "Yum, added! \(left.formatted()) cal left today."
+    private var title: String {
+        if justAdded != nil { return "Yum, added!" }
+        switch Calendar.current.component(.hour, from: .now) {
+        case 4..<12: return "Good morning!"
+        case 12..<17: return "Good afternoon!"
+        default: return "Good evening!"
         }
-        if calorieFraction <= 0 { return "Bit is hungry. Let’s check your first meal!" }
-        if calorieFraction < 0.2 { return "Nice start! Bit is waking up." }
-        if proteinFraction >= 1 && calorieFraction < 0.7 { return "Protein goal hit! Bit is feeling strong." }
-        if calorieFraction < 0.7 { return "Nice start! Bit is getting energized." }
-        if calorieFraction < 1 { return "Bit is full of energy. Almost there!" }
-        return "Goal reached! Great tracking today."
     }
 
-    // MARK: - Cards
+    private var subtitle: String {
+        if meals.isEmpty { return "Let’s log your first meal today." }
+        let caloriesLeft = calorieGoal - caloriesEaten
+        if caloriesLeft < 0 { return "You’re \((-caloriesLeft).formatted()) cal over today’s goal." }
+        if proteinFraction >= 1 { return "\(caloriesLeft.formatted()) cal left, and your protein goal is hit." }
+        return "You have \(caloriesLeft.formatted()) cal left today."
+    }
 
-    private func goalCard(icon: AppIcon, title: String, eaten: String, goal: String, fraction: Double) -> some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 8) {
-                Icon(icon, size: 20)
-                Text(title)
-                    .font(.rounded(15, .heavy))
-                    .foregroundStyle(Theme.ink)
-                Spacer()
-                (Text(eaten).font(.rounded(15, .black)).foregroundStyle(Theme.ink)
-                    + Text(" / \(goal)").font(.rounded(15, .bold)).foregroundStyle(Theme.mute))
+    // MARK: - Progress
+
+    private func ringTile(_ icon: AppIcon, eaten: String, goal: String, label: String, fraction: Double) -> some View {
+        ZStack {
+            ProgressRing(fraction: fraction, color: icon.color, lineWidth: 9)
+            VStack(spacing: 2) {
+                Icon(icon, size: 24)
+                (Text(eaten).font(.rounded(17, .black)).foregroundStyle(Theme.ink)
+                    + Text(" / \(goal)").font(.rounded(15, .bold)).foregroundStyle(Theme.ink.opacity(0.8)))
                     .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Text(label)
+                    .font(.rounded(13, .bold))
+                    .foregroundStyle(Theme.mute)
             }
-            CapsuleBar(fraction: fraction)
+            .padding(.horizontal, 18)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 14)
-        .padding(.bottom, 16)
-        .cardStyle()
+        .frame(width: 140, height: 140)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .cardStyle(radius: 24)
         .accessibilityElement(children: .combine)
     }
 
-    private var todaysMeals: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Icon(.meals, size: 20)
-                Text("Today's Meals")
-                    .font(.rounded(16, .black))
-                    .foregroundStyle(Theme.ink)
-            }
-            .padding(.bottom, 6)
+    // MARK: - Today's meals
 
-            if meals.isEmpty {
-                VStack(spacing: 4) {
-                    Icon(.meals, size: 28)
-                        .opacity(0.5)
-                        .padding(.bottom, 4)
-                    Text("No meals yet")
-                        .font(.rounded(14, .heavy))
-                        .foregroundStyle(Theme.mute)
-                    Text("Check your first meal to get started!")
-                        .font(.rounded(12, .bold))
-                        .foregroundStyle(Theme.mute)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
-                .background(Theme.plate, in: .rect(cornerRadius: 16))
-            } else {
-                ForEach(meals) { meal in
+    private var mealsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Today’s Meals")
+                    .font(.rounded(19, .black))
+                    .foregroundStyle(Theme.ink)
+                Spacer()
+                Text(meals.count == 1 ? "1 meal" : "\(meals.count) meals")
+                    .font(.rounded(14, .bold))
+                    .foregroundStyle(Theme.mute)
+            }
+            .padding(.horizontal, 4)
+            .padding(.top, 4)
+
+            Group {
+                if meals.isEmpty {
                     Button {
-                        open { editingMeal = meal }
+                        open { isCheckingMeal = true }
                     } label: {
-                        MealRow(meal: meal, isHighlighted: meal.id == justAdded?.id)
+                        HStack(spacing: 14) {
+                            Icon(.meals, size: 26)
+                                .frame(width: 40)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("No meals yet")
+                                    .font(.rounded(15, .heavy))
+                                    .foregroundStyle(Theme.ink)
+                                Text("Your meals will show up here!")
+                                    .font(.rounded(13, .bold))
+                                    .foregroundStyle(Theme.mute)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(Theme.mute)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 14)
+                        .contentShape(.rect)
                     }
                     .buttonStyle(.plain)
+                } else {
+                    VStack(spacing: 2) {
+                        ForEach(meals) { meal in
+                            Button {
+                                open { editingMeal = meal }
+                            } label: {
+                                MealRow(meal: meal, isHighlighted: meal.id == justAdded?.id)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 6)
                 }
             }
+            .cardStyle(radius: 20)
         }
-        .padding(.horizontal, 14)
-        .padding(.top, 14)
-        .padding(.bottom, 12)
-        .cardStyle()
+    }
+}
+
+/// Soft hill and clouds behind Bit.
+private struct HillBackdrop: View {
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            cloud.scaleEffect(0.9).offset(x: -150, y: -34)
+            cloud.offset(x: 150, y: -50)
+            Ellipse()
+                .fill(Theme.soft)
+                .frame(width: 560, height: 170)
+                .offset(y: 100)
+        }
+        .frame(height: 120)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+
+    private var cloud: some View {
+        ZStack(alignment: .bottom) {
+            Circle().frame(width: 54, height: 54).offset(x: -26)
+            Circle().frame(width: 72, height: 72).offset(y: -10)
+            Circle().frame(width: 50, height: 50).offset(x: 30)
+        }
+        .foregroundStyle(Theme.soft.opacity(0.8))
+    }
+}
+
+/// A circular track that fills clockwise from the top.
+struct ProgressRing: View {
+    let fraction: Double
+    var color: Color = Theme.blue
+    var lineWidth: CGFloat = 12
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Theme.soft, lineWidth: lineWidth)
+            Circle()
+                .trim(from: 0, to: min(max(fraction, 0.001), 1))
+                .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+        }
+        .padding(lineWidth / 2)
+        .animation(.spring(duration: 0.9), value: fraction)
     }
 }
 

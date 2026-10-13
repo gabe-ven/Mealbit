@@ -119,36 +119,8 @@ private struct Sparkle: View {
     }
 }
 
-/// White rounded speech bubble with a small tail, used next to Bit.
-struct SpeechBubble: View {
-    let text: String
-
-    var body: some View {
-        Text(text)
-            .font(.rounded(15, .bold))
-            .foregroundStyle(Theme.ink)
-            .multilineTextAlignment(.center)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
-            .background(alignment: .bottom) {
-                ZStack(alignment: .bottom) {
-                    RoundedRectangle(cornerRadius: 20).fill(Theme.card)
-                    Rectangle()
-                        .fill(Theme.card)
-                        .frame(width: 14, height: 14)
-                        .rotationEffect(.degrees(45))
-                        .offset(y: 6)
-                }
-                .compositingGroup()
-                .shadow(color: Theme.ink.opacity(0.06), radius: 7, y: 4)
-            }
-    }
-}
-
 #Preview {
     VStack(spacing: 20) {
-        SpeechBubble(text: "Bit is hungry. Let’s check your first meal!")
         HStack {
             BitView(mood: .hungry, size: 90)
             BitView(mood: .happy, size: 90, sparkle: true)
