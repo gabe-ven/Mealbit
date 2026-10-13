@@ -46,10 +46,10 @@ struct BitView: View {
     var body: some View {
         Group {
             if isAnimated {
-                image.phaseAnimator([false, true]) { content, phase in
-                    idleMotion(content, phase: phase)
-                } animation: { _ in
-                    .easeInOut(duration: halfCycle)
+                // Computed from the clock each frame rather than animated, so Bit
+                // appears in place instead of drifting there as the screen lays out.
+                TimelineView(.animation) { context in
+                    idleMotion(image, amount: Self.wave(at: context.date, halfCycle: halfCycle))
                 }
             } else {
                 image
@@ -84,15 +84,22 @@ struct BitView: View {
         }
     }
 
+    /// Smoothly goes 0 → 1 → 0, taking `halfCycle` seconds each way.
+    fileprivate static func wave(at date: Date, halfCycle: Double) -> Double {
+        let time = date.timeIntervalSinceReferenceDate
+        return (1 - cos(time * .pi / halfCycle)) / 2
+    }
+
+    /// `amount` runs from 0 (rest) to 1 (fully moved).
     @ViewBuilder
-    private func idleMotion(_ content: some View, phase: Bool) -> some View {
+    private func idleMotion(_ content: some View, amount: Double) -> some View {
         switch mood {
         case .hungry, .energized:
-            content.offset(y: phase ? -size * 0.04 : 0)
+            content.offset(y: -size * 0.04 * amount)
         case .happy:
-            content.scaleEffect(x: phase ? 1.025 : 1, y: phase ? 0.975 : 1, anchor: .bottom)
+            content.scaleEffect(x: 1 + 0.025 * amount, y: 1 - 0.025 * amount, anchor: .bottom)
         case .thinking:
-            content.rotationEffect(.degrees(phase ? 3 : -3), anchor: .bottom)
+            content.rotationEffect(.degrees(-3 + 6 * amount), anchor: .bottom)
         case .oops:
             content
         }
@@ -110,9 +117,10 @@ private struct Sparkle: View {
             .frame(width: size, height: size)
             .rotationEffect(.degrees(45))
         if isAnimated {
-            shape.phaseAnimator([false, true]) { content, phase in
-                content.scaleEffect(phase ? 1 : 0.6).opacity(phase ? 1 : 0.4)
-            } animation: { _ in .easeInOut(duration: 0.9) }
+            TimelineView(.animation) { context in
+                let amount = BitView.wave(at: context.date, halfCycle: 0.9)
+                shape.scaleEffect(0.6 + 0.4 * amount).opacity(0.4 + 0.6 * amount)
+            }
         } else {
             shape
         }
