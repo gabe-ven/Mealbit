@@ -6,6 +6,8 @@ import SwiftUI
 struct MealPreviewView: View {
     /// Closes the whole add-meal flow after logging or discarding.
     let onFinish: () -> Void
+    /// The photo the estimate came from, if any.
+    let photo: UIImage?
 
     @Environment(\.modelContext) private var modelContext
     @Query private var todaysMeals: [Meal]
@@ -19,8 +21,9 @@ struct MealPreviewView: View {
         ("½×", 0.5), ("1×", 1), ("1½×", 1.5), ("2×", 2),
     ]
 
-    init(draft: MealDraft, onFinish: @escaping () -> Void) {
+    init(draft: MealDraft, photo: UIImage? = nil, onFinish: @escaping () -> Void) {
         _draft = State(initialValue: draft)
+        self.photo = photo
         self.onFinish = onFinish
         _todaysMeals = Query(filter: Meal.loggedToday())
     }
@@ -43,6 +46,17 @@ struct MealPreviewView: View {
 
     var body: some View {
         List {
+            if let photo {
+                Image(uiImage: photo)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(height: 200)
+                    .frame(maxWidth: .infinity)
+                    .clipShape(.rect(cornerRadius: 16))
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
             Section("How it fits today") {
                 Text(fit.explanation)
                 impactRow(

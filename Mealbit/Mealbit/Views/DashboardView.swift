@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftData
 import SwiftUI
 
@@ -7,10 +8,15 @@ struct DashboardView: View {
     @AppStorage(NutritionGoals.caloriesKey) private var calorieGoal = NutritionGoals.defaultCalories
     @AppStorage(NutritionGoals.proteinKey) private var proteinGoal = NutritionGoals.defaultProtein
     @AppStorage(NutritionGoals.hasSetGoalsKey) private var hasSetGoals = false
-    @State private var isCheckingMeal = false
+    @State private var isShowingCamera = false
+    @State private var isShowingLibrary = false
+    @State private var isEnteringManually = false
     @State private var isEditingGoals = false
     @State private var editingMeal: Meal?
-    @State private var isPreviewingSample = false
+    @State private var libraryItem: PhotosPickerItem?
+    /// Taken in the camera; checked once the camera has closed.
+    @State private var capturedPhoto: UIImage?
+    @State private var checkingPhoto: MealPhoto?
 
     init() {
         _meals = Query(filter: Meal.loggedToday(), sort: \.date)
@@ -54,7 +60,7 @@ struct DashboardView: View {
             }
             .navigationTitle("Today")
             .safeAreaInset(edge: .bottom) {
-                checkMealButton
+                checkMealButtons
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -62,22 +68,22 @@ struct DashboardView: View {
                         isEditingGoals = true
                     }
                 }
-                #if DEBUG
-                // Temporary way to reach the photo-estimate preview until the camera flow exists.
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Sample") {
-                        isPreviewingSample = true
-                    }
-                }
-                #endif
             }
-            .sheet(isPresented: $isPreviewingSample) {
+            .fullScreenCover(isPresented: $isShowingCamera, onDismiss: checkCapturedPhoto) {
+                CameraPicker { capturedPhoto = $0 }
+                    .ignoresSafeArea()
+            }
+            .photosPicker(isPresented: $isShowingLibrary, selection: $libraryItem, matching: .images)
+            .onChange(of: libraryItem) {
+                Task { await checkLibraryPhoto() }
+            }
+            .sheet(item: $checkingPhoto) { photo in
                 NavigationStack {
-                    MealPreviewView(draft: .sampleEstimate, onFinish: { isPreviewingSample = false })
+                    MealAnalysisView(photo: photo.image, onFinish: { checkingPhoto = nil })
                 }
+                .interactiveDismissDisabled()
             }
-            .sheet(isPresented: $isCheckingMeal) {
-                // Manual entry until the camera flow exists.
+            .sheet(isPresented: $isEnteringManually) {
                 MealFormView()
             }
             .sheet(item: $editingMeal) { meal in
@@ -92,19 +98,46 @@ struct DashboardView: View {
         }
     }
 
-    private var checkMealButton: some View {
-        Button {
-            isCheckingMeal = true
-        } label: {
-            Label("Check a Meal", systemImage: "camera.fill")
-                .font(.title3.weight(.semibold))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+    private var checkMealButtons: some View {
+        VStack(spacing: 12) {
+            Button {
+                if CameraPicker.isAvailable {
+                    isShowingCamera = true
+                } else {
+                    isShowingLibrary = true
+                }
+            } label: {
+                Label("Check a Meal", systemImage: "camera.fill")
+                    .font(.title3.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+
+            HStack(spacing: 32) {
+                Button("Choose Photo") { isShowingLibrary = true }
+                Button("Enter Manually") { isEnteringManually = true }
+            }
+            .font(.subheadline.weight(.medium))
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
         .padding(.horizontal, 24)
         .padding(.bottom, 8)
+    }
+
+    private func checkCapturedPhoto() {
+        guard let capturedPhoto else { return }
+        checkingPhoto = MealPhoto(image: capturedPhoto)
+        self.capturedPhoto = nil
+    }
+
+    private func checkLibraryPhoto() async {
+        guard let libraryItem else { return }
+        self.libraryItem = nil
+        guard let data = try? await libraryItem.loadTransferable(type: Data.self),
+              let image = UIImage(data: data)
+        else { return }
+        checkingPhoto = MealPhoto(image: image)
     }
 }
 
