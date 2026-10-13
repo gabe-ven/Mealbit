@@ -19,13 +19,7 @@ enum MealEstimateError: LocalizedError {
 /// Turns a meal photo into an estimated `MealDraft` with one request to the
 /// Mealbit proxy, which calls Claude. The API key stays on the proxy.
 enum MealEstimator {
-    #if targetEnvironment(simulator)
-    // `npm run dev` in proxy/ while testing in the simulator.
-    private static let endpoint = URL(string: "http://localhost:8787/estimate")!
-    #else
-    // Replace with your deployed Worker URL after `npm run deploy` in proxy/.
-    private static let endpoint = URL(string: "https://mealbit-proxy.YOUR-SUBDOMAIN.workers.dev/estimate")!
-    #endif
+    private static let endpoint = URL(string: "https://mealbit-proxy.mealbit.workers.dev/estimate")!
 
     private static let maxImageDimension: CGFloat = 1568
 

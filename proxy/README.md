@@ -17,16 +17,19 @@ spend limit for your key in the Claude Console, since the URL is public.
    ```
 3. `npm run dev`
 
-The simulator build of the app calls `http://localhost:8787/estimate`.
+To point the app at it, temporarily set `MealEstimator.endpoint` to
+`http://localhost:8787/estimate` (works in the simulator only).
 
 ## Deploy (for real phones)
 
 1. `npx wrangler login`
 2. `npx wrangler secret put ANTHROPIC_API_KEY` and paste the key.
-3. `npm run deploy`. Wrangler prints the Worker URL, such as
-   `https://mealbit-proxy.<your-subdomain>.workers.dev`.
-4. Put that URL in `MealEstimator.endpoint` (the non-simulator branch) in
-   `Mealbit/Mealbit/Services/MealEstimator.swift`.
+3. `npm run deploy`
+
+The app calls the deployed Worker at
+`https://mealbit-proxy.mealbit.workers.dev/estimate` (set in
+`Mealbit/Mealbit/Services/MealEstimator.swift`). To change the key later, run
+step 2 again; no redeploy is needed.
 
 ## Test with curl
 

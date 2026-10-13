@@ -1,6 +1,8 @@
 name = "mealbit-proxy"
 main = "src/index.js"
 compatibility_date = "2026-05-01"
+workers_dev = true
+preview_urls = false
 
 [vars]
 MODEL = "claude-opus-5-5"
