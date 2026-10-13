@@ -79,14 +79,6 @@ struct CheckMealView: View {
             .padding(.top, 12)
 
             Spacer(minLength: 16)
-
-            Label { Text("Works with any meal") } icon: { Icon(.sparkles, size: 14) }
-                .font(.rounded(14, .heavy))
-                .foregroundStyle(Theme.ink)
-            Text("Bowls, sandwiches, snacks, and more!")
-                .font(.rounded(13, .semibold))
-                .foregroundStyle(Theme.mute)
-                .padding(.top, 4)
         }
         .padding(.horizontal, 20)
         .padding(.top, 10)
