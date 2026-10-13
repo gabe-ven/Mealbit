@@ -34,9 +34,7 @@ struct MealAnalysisView: View {
             ScanningPhoto(photo: photo, isScanning: error == nil)
 
             BitView(mood: error == nil ? .thinking : .oops, size: 116)
-                .padding(6)
-                .background(Theme.background, in: .circle)
-                .padding(.top, -58)
+                .padding(.top, 16)
 
             VStack(spacing: 8) {
                 Text(error == nil ? "Bit is taking a look…" : "Couldn't Estimate")
