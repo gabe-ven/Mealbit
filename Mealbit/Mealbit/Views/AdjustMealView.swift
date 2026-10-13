@@ -119,15 +119,8 @@ struct AdjustMealView: View {
     }
 
     private func stepButton(_ symbol: String, label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 16, weight: .heavy))
-                .foregroundStyle(Theme.blue)
-                .frame(width: 40, height: 40)
-                .background(Theme.soft, in: .circle)
-        }
-        .buttonStyle(.plain)
-        .disabled(!enabled)
+        StepButton(systemImage: symbol, size: 40, action: action)
+            .disabled(!enabled)
         .opacity(enabled ? 1 : 0.4)
         .accessibilityLabel(label)
     }

@@ -22,8 +22,9 @@ struct GoalSetupView: View {
             Spacer()
             BitView(mood: .happy, size: 190)
                 .frame(width: 250, height: 250)
-                .background(Theme.card, in: .circle)
-                .shadow(color: Theme.blue.opacity(0.14), radius: 15, y: 10)
+                .background {
+                    Circle().fill(Theme.card).shadow(color: Theme.blue.opacity(0.14), radius: 15, y: 10)
+                }
             Wordmark(size: 50)
                 .padding(.top, 10)
             Text("Snap your meal. See how it fits your day.")
@@ -52,10 +53,9 @@ struct GoalSetupView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
-                    .background(Theme.card, in: UnevenRoundedRectangle(
+                    .raised(UnevenRoundedRectangle(
                         topLeadingRadius: 20, bottomLeadingRadius: 6, bottomTrailingRadius: 20, topTrailingRadius: 20
                     ))
-                    .raisedShadow()
                     .padding(.bottom, 22)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

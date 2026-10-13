@@ -131,15 +131,18 @@ struct SpeechBubble: View {
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
-            .background(Theme.card, in: .rect(cornerRadius: 20))
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(Theme.card)
-                    .frame(width: 14, height: 14)
-                    .rotationEffect(.degrees(45))
-                    .offset(y: 6)
+            .background(alignment: .bottom) {
+                ZStack(alignment: .bottom) {
+                    RoundedRectangle(cornerRadius: 20).fill(Theme.card)
+                    Rectangle()
+                        .fill(Theme.card)
+                        .frame(width: 14, height: 14)
+                        .rotationEffect(.degrees(45))
+                        .offset(y: 6)
+                }
+                .compositingGroup()
+                .shadow(color: Theme.ink.opacity(0.06), radius: 7, y: 4)
             }
-            .shadow(color: Theme.ink.opacity(0.06), radius: 7, y: 4)
     }
 }
 

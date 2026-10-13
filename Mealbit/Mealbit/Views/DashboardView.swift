@@ -131,8 +131,9 @@ struct DashboardView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(Theme.blue, in: .capsule)
-                    .shadow(color: Theme.blue.opacity(0.3), radius: 7, y: 6)
+                    .background {
+                        Capsule().fill(Theme.blue).shadow(color: Theme.blue.opacity(0.3), radius: 7, y: 6)
+                    }
                     .offset(x: -14, y: 84)
                     .transition(.scale(scale: 0.4).combined(with: .opacity))
             }
@@ -144,8 +145,9 @@ struct DashboardView: View {
                     .foregroundStyle(Theme.ink)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(Theme.card, in: .capsule)
-                    .shadow(color: Theme.ink.opacity(0.08), radius: 6, y: 4)
+                    .background {
+                        Capsule().fill(Theme.card).shadow(color: Theme.ink.opacity(0.08), radius: 6, y: 4)
+                    }
                     .offset(x: 10, y: 96)
             }
         }

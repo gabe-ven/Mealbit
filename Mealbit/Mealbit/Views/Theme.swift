@@ -22,6 +22,8 @@ enum Theme {
     static let amberBackground = Color(light: 0xFFF4DF, dark: 0x3A2E17)
     static let fitBackground = Color(light: 0xE8F8EE, dark: 0x16352A)
     static let danger = Color(light: 0xD93D42, dark: 0xFF7A7E)
+    /// Lip under a disabled primary button.
+    static let disabledEdge = Color(light: 0xC5D3E8, dark: 0x1A2A45)
 
     /// Soft navy shadow used under cards.
     static let shadow = Color(light: 0x0F2547, dark: 0x000000).opacity(0.05)
@@ -55,6 +57,38 @@ extension Font {
 
 // MARK: - Buttons
 
+extension View {
+    /// Duolingo-style "chunky" look: a solid face sitting on a darker lip.
+    /// When pressed, the face sinks down onto the lip.
+    func chunky<S: InsettableShape>(
+        _ shape: S, face: Color, edge: Color, border: Color? = nil, depth: CGFloat = 4, isPressed: Bool = false
+    ) -> some View {
+        self
+            .background { shape.fill(face) }
+            .overlay {
+                if let border { shape.strokeBorder(border, lineWidth: 2) }
+            }
+            .offset(y: isPressed ? depth : 0)
+            .background { shape.fill(edge).offset(y: depth) }
+            .padding(.bottom, depth)
+    }
+}
+
+/// Any button drawn with the chunky face-and-lip look.
+struct ChunkyButtonStyle<S: InsettableShape>: ButtonStyle {
+    let shape: S
+    let face: Color
+    let edge: Color
+    var border: Color? = nil
+    var depth: CGFloat = 4
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .chunky(shape, face: face, edge: edge, border: border, depth: depth, isPressed: configuration.isPressed)
+            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+    }
+}
+
 /// Full-width solid blue button.
 struct PrimaryButtonStyle: ButtonStyle {
     var height: CGFloat = 58
@@ -65,18 +99,20 @@ struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.rounded(fontSize, .black))
-            .foregroundStyle(.white)
+            .foregroundStyle(isEnabled ? .white : Theme.mute)
             .frame(maxWidth: .infinity)
             .frame(height: height)
-            .background(Theme.blue, in: .rect(cornerRadius: 20))
-            .shadow(color: Theme.blue.opacity(0.32), radius: configuration.isPressed ? 4 : 9, y: configuration.isPressed ? 3 : 8)
-            .offset(y: configuration.isPressed ? 2 : 0)
-            .opacity(isEnabled ? 1 : 0.45)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+            .chunky(
+                RoundedRectangle(cornerRadius: 20),
+                face: isEnabled ? Theme.blue : Theme.line,
+                edge: isEnabled ? Theme.blueDeep : Theme.disabledEdge,
+                isPressed: configuration.isPressed
+            )
+            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
     }
 }
 
-/// Full-width light blue button with blue text.
+/// Full-width white button with a light border and blue text.
 struct SecondaryButtonStyle: ButtonStyle {
     var height: CGFloat = 52
 
@@ -86,8 +122,12 @@ struct SecondaryButtonStyle: ButtonStyle {
             .foregroundStyle(Theme.blue)
             .frame(maxWidth: .infinity)
             .frame(height: height)
-            .background(Theme.soft, in: .rect(cornerRadius: 20))
-            .offset(y: configuration.isPressed ? 1 : 0)
+            .chunky(
+                RoundedRectangle(cornerRadius: 20),
+                face: Theme.card, edge: Theme.line, border: Theme.line,
+                isPressed: configuration.isPressed
+            )
+            .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
     }
 }
 
@@ -104,7 +144,7 @@ struct TextButtonStyle: ButtonStyle {
     }
 }
 
-/// 44pt circle with a flat bottom edge, used for back and close buttons.
+/// Round white button, used for back and close.
 struct CircleButton: View {
     let systemImage: String
     var size: CGFloat = 44
@@ -116,24 +156,48 @@ struct CircleButton: View {
                 .font(.system(size: size * 0.4, weight: .bold))
                 .foregroundStyle(Theme.ink)
                 .frame(width: size, height: size)
-                .background(Theme.card, in: .circle)
-                .raisedShadow()
         }
+        .buttonStyle(ChunkyButtonStyle(shape: Circle(), face: Theme.card, edge: Theme.line, border: Theme.line, depth: 3))
+    }
+}
+
+/// Round light blue +/– button.
+struct StepButton: View {
+    let systemImage: String
+    var size: CGFloat = 52
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: size * 0.4, weight: .heavy))
+                .foregroundStyle(Theme.blue)
+                .frame(width: size, height: size)
+        }
+        .buttonStyle(ChunkyButtonStyle(shape: Circle(), face: Theme.soft, edge: Theme.blueSoft, depth: 3))
     }
 }
 
 // MARK: - Cards
 
 extension View {
-    /// White card with a soft shadow.
+    /// White card with a soft shadow under the card only, not its contents.
     func cardStyle(radius: CGFloat = 22) -> some View {
-        background(Theme.card, in: .rect(cornerRadius: radius))
-            .shadow(color: Theme.shadow, radius: 7, y: 4)
+        background {
+            RoundedRectangle(cornerRadius: radius)
+                .fill(Theme.card)
+                .shadow(color: Theme.shadow, radius: 7, y: 4)
+        }
     }
 
-    /// The flat "raised" look: a 2pt line under the shape.
-    func raisedShadow() -> some View {
-        shadow(color: Theme.line, radius: 0, y: 2)
+    /// The flat "raised" look: the shape sits on a 2pt line-colored edge.
+    func raised<S: Shape>(_ shape: S, fill: Color = Theme.card) -> some View {
+        background {
+            ZStack {
+                shape.fill(Theme.line).offset(y: 2)
+                shape.fill(fill)
+            }
+        }
     }
 }
 
@@ -302,8 +366,7 @@ struct GoalStepperCard: View {
                 .foregroundStyle(Theme.mute)
         }
         .padding(16)
-        .background(Theme.card, in: .rect(cornerRadius: 24))
-        .raisedShadow()
+        .raised(RoundedRectangle(cornerRadius: 24))
         .accessibilityElement(children: .combine)
         .accessibilityValue("\(value) \(unit)")
         .accessibilityAdjustableAction { direction in
@@ -316,15 +379,8 @@ struct GoalStepperCard: View {
     }
 
     private func stepButton(_ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {
-        Button {
+        StepButton(systemImage: symbol) {
             withAnimation(.snappy) { action() }
-        } label: {
-            Image(systemName: symbol)
-                .font(.system(size: 22, weight: .heavy))
-                .foregroundStyle(Theme.blue)
-                .frame(width: 52, height: 52)
-                .background(Theme.soft, in: .circle)
-                .shadow(color: Theme.blueSoft, radius: 0, y: 3)
         }
         .buttonRepeatBehavior(.enabled)
         .disabled(!enabled)
@@ -348,10 +404,15 @@ struct SegmentPicker<Value: Hashable>: View {
                         .font(.rounded(17, .black))
                         .foregroundStyle(isSelected ? .white : Theme.ink)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 46)
-                        .background(isSelected ? Theme.blue : Theme.card, in: .rect(cornerRadius: 14))
-                        .shadow(color: isSelected ? Theme.blueDeep : Theme.line, radius: 0, y: isSelected ? 3 : 2)
+                        .frame(height: 44)
                 }
+                .buttonStyle(ChunkyButtonStyle(
+                    shape: RoundedRectangle(cornerRadius: 14),
+                    face: isSelected ? Theme.blue : Theme.card,
+                    edge: isSelected ? Theme.blueDeep : Theme.line,
+                    border: isSelected ? nil : Theme.line,
+                    depth: 3
+                ))
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
