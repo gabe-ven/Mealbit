@@ -22,3 +22,20 @@ extension Meal {
         return container
     }
 }
+
+extension MealDraft {
+    /// Shaped like a photo estimate, for previews until the AI call exists.
+    static var sampleEstimate: MealDraft {
+        MealDraft(
+            name: "Chicken, Rice & Broccoli",
+            category: .dinner,
+            components: [
+                MealComponent(name: "Grilled chicken breast", quantity: 6, unit: "oz", calories: 280, protein: 52, carbs: 0, fat: 6),
+                MealComponent(name: "White rice", quantity: 1, unit: "cup", calories: 205, protein: 4, carbs: 45, fat: 0.5),
+                MealComponent(name: "Steamed broccoli", quantity: 1.5, unit: "cups", calories: 45, protein: 4, carbs: 9, fat: 0.5),
+                MealComponent(name: "Cooking oil", quantity: 1, unit: "tsp", calories: 40, protein: 0, carbs: 0, fat: 4.5),
+            ],
+            estimateNote: "Assumed about 6 oz chicken, 1 cup rice, and a little oil from cooking."
+        )
+    }
+}

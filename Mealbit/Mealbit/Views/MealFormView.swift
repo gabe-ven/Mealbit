@@ -35,14 +35,6 @@ struct MealFormView: View {
         return value
     }
 
-    /// Blank means 0 g; anything else must be a non-negative number.
-    private func grams(from text: String) -> Double? {
-        let trimmed = text.trimmingCharacters(in: .whitespaces)
-        if trimmed.isEmpty { return 0 }
-        guard let value = try? Double(trimmed, format: .number), value >= 0 else { return nil }
-        return value
-    }
-
     var body: some View {
         NavigationStack {
             Form {
@@ -57,7 +49,7 @@ struct MealFormView: View {
                 }
 
                 Section {
-                    numberField("Calories", unit: "kcal", text: $caloriesText, keyboard: .numberPad)
+                    NumberField(title: "Calories", unit: "kcal", text: $caloriesText, keyboard: .numberPad)
                 } footer: {
                     if !caloriesText.isEmpty && calories == nil {
                         Text("Enter calories as a whole number.")
@@ -66,9 +58,9 @@ struct MealFormView: View {
                 }
 
                 Section("Macros") {
-                    numberField("Protein", unit: "g", text: $proteinText, keyboard: .decimalPad)
-                    numberField("Carbs", unit: "g", text: $carbsText, keyboard: .decimalPad)
-                    numberField("Fat", unit: "g", text: $fatText, keyboard: .decimalPad)
+                    NumberField(title: "Protein", unit: "g", text: $proteinText)
+                    NumberField(title: "Carbs", unit: "g", text: $carbsText)
+                    NumberField(title: "Fat", unit: "g", text: $fatText)
                 }
             }
             .navigationTitle(meal == nil ? "Add Meal" : "Edit Meal")
@@ -93,31 +85,13 @@ struct MealFormView: View {
         }
     }
 
-    private func numberField(
-        _ title: String,
-        unit: String,
-        text: Binding<String>,
-        keyboard: UIKeyboardType
-    ) -> some View {
-        HStack {
-            Text(title)
-            Spacer()
-            TextField("0", text: text)
-                .keyboardType(keyboard)
-                .multilineTextAlignment(.trailing)
-                .frame(maxWidth: 100)
-            Text(unit)
-                .foregroundStyle(.secondary)
-        }
-    }
-
     /// The entered values, or nil while any field is invalid.
     private var draft: MealDraft? {
         guard !trimmedName.isEmpty,
               let calories,
-              let protein = grams(from: proteinText),
-              let carbs = grams(from: carbsText),
-              let fat = grams(from: fatText)
+              let protein = NumberInput.nonNegative(proteinText),
+              let carbs = NumberInput.nonNegative(carbsText),
+              let fat = NumberInput.nonNegative(fatText)
         else { return nil }
         return MealDraft(name: trimmedName, category: category, calories: calories, protein: protein, carbs: carbs, fat: fat)
     }
