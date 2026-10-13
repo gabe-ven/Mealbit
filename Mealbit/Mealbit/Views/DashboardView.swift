@@ -7,9 +7,10 @@ struct DashboardView: View {
     @AppStorage(NutritionGoals.caloriesKey) private var calorieGoal = NutritionGoals.defaultCalories
     @AppStorage(NutritionGoals.proteinKey) private var proteinGoal = NutritionGoals.defaultProtein
     @AppStorage(NutritionGoals.hasSetGoalsKey) private var hasSetGoals = false
-    @State private var isAddingMeal = false
+    @State private var isCheckingMeal = false
     @State private var isEditingGoals = false
     @State private var editingMeal: Meal?
+    @State private var isPreviewingSample = false
 
     init() {
         _meals = Query(filter: Meal.loggedToday(), sort: \.date)
@@ -17,64 +18,66 @@ struct DashboardView: View {
 
     private var caloriesEaten: Int { meals.reduce(0) { $0 + $1.calories } }
     private var proteinEaten: Double { meals.reduce(0) { $0 + $1.protein } }
-    private var carbsEaten: Double { meals.reduce(0) { $0 + $1.carbs } }
-    private var fatEaten: Double { meals.reduce(0) { $0 + $1.fat } }
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    CalorieSummaryCard(consumed: caloriesEaten, goal: calorieGoal)
+                    RemainingCard(
+                        caloriesEaten: caloriesEaten,
+                        calorieGoal: calorieGoal,
+                        proteinEaten: proteinEaten,
+                        proteinGoal: proteinGoal
+                    )
                 }
 
-                Section {
-                    MacroProgressRow(name: "Protein", consumed: proteinEaten, goal: Double(proteinGoal), color: .blue)
-                    gramsRow("Carbs", carbsEaten)
-                    gramsRow("Fat", fatEaten)
-                }
-
-                if meals.isEmpty {
-                    Section("Today's Meals") {
-                        Text("No meals logged yet. Tap + to add one.")
+                Section("Eaten Today") {
+                    if meals.isEmpty {
+                        Text("Check a meal before you eat it to see how it fits your day.")
                             .foregroundStyle(.secondary)
-                    }
-                } else {
-                    ForEach(MealCategory.allCases) { category in
-                        let categoryMeals = meals.filter { $0.category == category }
-                        if !categoryMeals.isEmpty {
-                            Section(category.displayName) {
-                                ForEach(categoryMeals) { meal in
-                                    Button {
-                                        editingMeal = meal
-                                    } label: {
-                                        MealRow(meal: meal)
-                                    }
-                                    .tint(.primary)
-                                }
-                                .onDelete { offsets in
-                                    for index in offsets {
-                                        modelContext.delete(categoryMeals[index])
-                                    }
-                                }
+                    } else {
+                        ForEach(meals) { meal in
+                            Button {
+                                editingMeal = meal
+                            } label: {
+                                MealRow(meal: meal)
+                            }
+                            .tint(.primary)
+                        }
+                        .onDelete { offsets in
+                            for index in offsets {
+                                modelContext.delete(meals[index])
                             }
                         }
                     }
                 }
             }
             .navigationTitle("Today")
+            .safeAreaInset(edge: .bottom) {
+                checkMealButton
+            }
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Daily Goals", systemImage: "target") {
                         isEditingGoals = true
                     }
                 }
-                ToolbarItem(placement: .primaryAction) {
-                    Button("Add Meal", systemImage: "plus") {
-                        isAddingMeal = true
+                #if DEBUG
+                // Temporary way to reach the photo-estimate preview until the camera flow exists.
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Sample") {
+                        isPreviewingSample = true
                     }
                 }
+                #endif
             }
-            .sheet(isPresented: $isAddingMeal) {
+            .sheet(isPresented: $isPreviewingSample) {
+                NavigationStack {
+                    MealPreviewView(draft: .sampleEstimate, onFinish: { isPreviewingSample = false })
+                }
+            }
+            .sheet(isPresented: $isCheckingMeal) {
+                // Manual entry until the camera flow exists.
                 MealFormView()
             }
             .sheet(item: $editingMeal) { meal in
@@ -83,19 +86,25 @@ struct DashboardView: View {
             .sheet(isPresented: $isEditingGoals) {
                 GoalsView()
             }
-            .onAppear {
-                if !hasSetGoals {
-                    isEditingGoals = true
-                }
+            .fullScreenCover(isPresented: .constant(!hasSetGoals)) {
+                GoalSetupView()
             }
         }
     }
 
-    private func gramsRow(_ name: String, _ grams: Double) -> some View {
-        LabeledContent(name) {
-            Text("\(grams, format: .number.precision(.fractionLength(0))) g")
-                .monospacedDigit()
+    private var checkMealButton: some View {
+        Button {
+            isCheckingMeal = true
+        } label: {
+            Label("Check a Meal", systemImage: "camera.fill")
+                .font(.title3.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
         }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+        .padding(.horizontal, 24)
+        .padding(.bottom, 8)
     }
 }
 

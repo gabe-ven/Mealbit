@@ -5,7 +5,6 @@ struct GoalsView: View {
 
     @AppStorage(NutritionGoals.caloriesKey) private var calorieGoal = NutritionGoals.defaultCalories
     @AppStorage(NutritionGoals.proteinKey) private var proteinGoal = NutritionGoals.defaultProtein
-    @AppStorage(NutritionGoals.hasSetGoalsKey) private var hasSetGoals = false
 
     @State private var caloriesText = ""
     @State private var proteinText = ""
@@ -24,14 +23,6 @@ struct GoalsView: View {
                 Section {
                     goalField("Calories", unit: "kcal", text: $caloriesText)
                     goalField("Protein", unit: "g", text: $proteinText)
-                } header: {
-                    if !hasSetGoals {
-                        Text("Mealbit uses your daily goals to show how a meal would fit your day before you eat it.")
-                            .textCase(nil)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .padding(.bottom, 8)
-                    }
                 } footer: {
                     if !caloriesText.isEmpty && calories == nil {
                         rangeHint("Calories", NutritionGoals.calorieRange, unit: "kcal")
@@ -45,17 +36,14 @@ struct GoalsView: View {
             .navigationTitle("Daily Goals")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if hasSetGoals {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") { dismiss() }
-                    }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", action: save)
                         .disabled(calories == nil || protein == nil)
                 }
             }
-            .interactiveDismissDisabled(!hasSetGoals)
             .onAppear {
                 caloriesText = String(calorieGoal)
                 proteinText = String(proteinGoal)
@@ -85,7 +73,6 @@ struct GoalsView: View {
         guard let calories, let protein else { return }
         calorieGoal = calories
         proteinGoal = protein
-        hasSetGoals = true
         dismiss()
     }
 }

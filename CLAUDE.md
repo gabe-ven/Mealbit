@@ -8,6 +8,8 @@ The app helps students and gym-goers decide what to eat *before* eating it. The 
 
 Read `PROJECT.md` before implementing features to understand the project's goals, scope, and user experience.
 
+For UX and flow decisions, use the course lecture `docs/ECS 191_ Product engineering.pdf` as a reference. Its main ideas: reduce "time to magic," make the one core loop obvious, keep everything else spartan, and avoid features that need a tutorial.
+
 ## Tech Stack
 
 - **Language:** Swift
