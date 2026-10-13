@@ -79,25 +79,6 @@ struct Icon: View {
     }
 }
 
-/// An icon on a softly tinted rounded square of its own color.
-struct IconBadge: View {
-    let icon: AppIcon
-    var size: CGFloat = 18
-    var box: CGFloat = 34
-
-    init(_ icon: AppIcon, size: CGFloat = 18, box: CGFloat = 34) {
-        self.icon = icon
-        self.size = size
-        self.box = box
-    }
-
-    var body: some View {
-        Icon(icon, size: size)
-            .frame(width: box, height: box)
-            .background(icon.color.opacity(0.15), in: .rect(cornerRadius: box * 0.3))
-    }
-}
-
 /// Filled flexed arm, from Material Design Icons' "arm-flex" (Apache 2.0),
 /// drawn on a 24×24 grid.
 private struct FlexedArm: Shape {
@@ -123,10 +104,10 @@ private struct FlexedArm: Shape {
 #Preview {
     VStack(spacing: 16) {
         HStack {
-            IconBadge(.calories)
-            IconBadge(.protein)
-            IconBadge(.meals)
-            IconBadge(.goals)
+            Icon(.calories)
+            Icon(.protein)
+            Icon(.meals)
+            Icon(.goals)
         }
         HStack {
             Icon(.camera)
@@ -138,10 +119,10 @@ private struct FlexedArm: Shape {
             Icon(.profile)
         }
         HStack {
-            IconBadge(.breakfast, size: 22, box: 52)
-            IconBadge(.lunch, size: 22, box: 52)
-            IconBadge(.dinner, size: 22, box: 52)
-            IconBadge(.snack, size: 22, box: 52)
+            Icon(.breakfast, size: 24)
+            Icon(.lunch, size: 24)
+            Icon(.dinner, size: 24)
+            Icon(.snack, size: 24)
         }
     }
     .padding()

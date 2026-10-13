@@ -170,8 +170,8 @@ struct DashboardView: View {
 
     private func goalCard(icon: AppIcon, title: String, eaten: String, goal: String, fraction: Double) -> some View {
         VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                IconBadge(icon)
+            HStack(spacing: 8) {
+                Icon(icon, size: 20)
                 Text(title)
                     .font(.rounded(15, .heavy))
                     .foregroundStyle(Theme.ink)
@@ -191,8 +191,8 @@ struct DashboardView: View {
 
     private var todaysMeals: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 10) {
-                IconBadge(.meals)
+            HStack(spacing: 8) {
+                Icon(.meals, size: 20)
                 Text("Today's Meals")
                     .font(.rounded(16, .black))
                     .foregroundStyle(Theme.ink)
@@ -201,8 +201,8 @@ struct DashboardView: View {
 
             if meals.isEmpty {
                 VStack(spacing: 4) {
-                    IconBadge(.meals, size: 24, box: 48)
-                        .opacity(0.7)
+                    Icon(.meals, size: 28)
+                        .opacity(0.5)
                         .padding(.bottom, 4)
                     Text("No meals yet")
                         .font(.rounded(14, .heavy))

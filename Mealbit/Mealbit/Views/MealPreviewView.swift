@@ -94,7 +94,7 @@ struct MealPreviewView: View {
                 }
                 .accessibilityHidden(true)
         } else {
-            IconBadge(.meals, size: 36, box: 72)
+            Icon(.meals, size: 44)
                 .frame(maxWidth: .infinity)
                 .frame(height: 110)
                 .background(Theme.soft, in: .rect(cornerRadius: 24))
@@ -122,7 +122,7 @@ struct MealPreviewView: View {
 
     private func statTile(icon: AppIcon, value: String, label: String) -> some View {
         HStack(spacing: 10) {
-            IconBadge(icon, size: 22, box: 44)
+            Icon(icon, size: 26)
             VStack(alignment: .leading, spacing: 0) {
                 Text(value)
                     .font(.rounded(24, .black))

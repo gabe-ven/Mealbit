@@ -342,7 +342,7 @@ struct GoalStepperCard: View {
     var body: some View {
         VStack(spacing: 10) {
             HStack(spacing: 8) {
-                IconBadge(icon, size: 16, box: 30)
+                Icon(icon, size: 18)
                 Text(title)
                     .font(.rounded(15, .heavy))
                     .foregroundStyle(Theme.mute)

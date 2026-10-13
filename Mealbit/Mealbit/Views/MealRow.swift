@@ -6,7 +6,8 @@ struct MealRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            IconBadge(meal.category.icon, size: 22, box: 52)
+            Icon(meal.category.icon, size: 24)
+                .frame(width: 40)
             VStack(alignment: .leading, spacing: 2) {
                 Text(meal.name)
                     .font(.rounded(14, .heavy))
