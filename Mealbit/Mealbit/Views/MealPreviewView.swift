@@ -16,6 +16,7 @@ struct MealPreviewView: View {
     @State private var draft: MealDraft
     @State private var portion = 1.0
     @State private var isEditing = false
+    @State private var showsAllIngredients = false
 
     init(draft: MealDraft, photo: UIImage? = nil, onFinish: @escaping () -> Void) {
         _draft = State(initialValue: draft)
@@ -43,36 +44,21 @@ struct MealPreviewView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 14) {
                 header
                 titleBlock
-                HStack(spacing: 10) {
-                    statTile(icon: .calories, value: "≈\(meal.calories.formatted())", label: "calories")
-                    statTile(icon: .protein, value: "≈\(Int(meal.protein.rounded()))g", label: "protein")
-                }
-                verdictCard
-                fitCard
-                Label { Text(footnote) } icon: { Icon(.info, size: 12, color: Theme.mute) }
-                    .font(.rounded(12, .bold))
-                    .foregroundStyle(Theme.mute)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 4)
-
-                Button("Add to Today", action: log)
-                    .buttonStyle(PrimaryButtonStyle())
-                    .disabled(draft.components.allSatisfy { $0.scale == 0 })
-                    .padding(.top, 4)
-                Button {
-                    isEditing = true
-                } label: {
-                    Label { Text("Edit Meal") } icon: { Icon(.pencil, size: 19) }
-                }
-                .buttonStyle(SecondaryButtonStyle())
+                bitCard
+                dayCard
+                disclaimer
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 30)
+            .padding(.top, 4)
+            .padding(.bottom, 12)
         }
         .background(Theme.background)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            actionBar
+        }
         .navigationTitle("Meal Result")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isEditing) {
@@ -85,8 +71,8 @@ struct MealPreviewView: View {
     @ViewBuilder
     private var header: some View {
         if let photo {
-            FilledImage(image: Image(uiImage: photo), height: 138)
-                .clipShape(.rect(cornerRadius: 24))
+            FilledImage(image: Image(uiImage: photo), height: 150)
+                .clipShape(.rect(cornerRadius: 22))
                 .overlay(alignment: .topTrailing) {
                     chip("Estimate", icon: .sparkles, foreground: .white, background: Theme.ink.opacity(0.7))
                         .environment(\.colorScheme, .light)
@@ -94,10 +80,10 @@ struct MealPreviewView: View {
                 }
                 .accessibilityHidden(true)
         } else {
-            Icon(.meals, size: 44)
+            Icon(.meals, size: 36)
                 .frame(maxWidth: .infinity)
-                .frame(height: 110)
-                .background(Theme.soft, in: .rect(cornerRadius: 24))
+                .frame(height: 84)
+                .background(Theme.soft, in: .rect(cornerRadius: 22))
                 .overlay(alignment: .topTrailing) {
                     chip("Entered by you", icon: .pencil, foreground: Theme.blue, background: Theme.card)
                         .padding(10)
@@ -107,114 +93,163 @@ struct MealPreviewView: View {
     }
 
     private var titleBlock: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(draft.name.isEmpty ? "Meal" : draft.name)
-                .font(.rounded(21, .black))
+                .font(.rounded(22, .heavy))
                 .foregroundStyle(Theme.ink)
-            Text(ingredients)
-                .font(.rounded(14, .semibold))
-                .foregroundStyle(Theme.mute)
+
+            if photo != nil {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(ingredients)
+                        .font(.rounded(14, .medium))
+                        .foregroundStyle(Theme.mute)
+                        .lineLimit(showsAllIngredients ? nil : 2)
+                    if ingredients.count > 70 {
+                        Button(showsAllIngredients ? "Less" : "More") {
+                            withAnimation(.snappy) { showsAllIngredients.toggle() }
+                        }
+                        .font(.rounded(13, .bold))
+                        .foregroundStyle(Theme.blue)
+                    }
+                }
+            }
+
+            HStack(spacing: 18) {
+                estimate(.calories, value: "≈\(meal.calories.formatted())", unit: "cal")
+                estimate(.protein, value: "≈\(Int(meal.protein.rounded())) g", unit: "protein")
+            }
+            .padding(.top, 2)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 4)
-        .padding(.top, 4)
     }
 
-    private func statTile(icon: AppIcon, value: String, label: String) -> some View {
-        HStack(spacing: 10) {
-            Icon(icon, size: 26)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(value)
-                    .font(.rounded(24, .black))
-                    .foregroundStyle(Theme.ink)
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-                Text(label)
-                    .font(.rounded(13, .bold))
-                    .foregroundStyle(Theme.mute)
-            }
-            Spacer(minLength: 0)
+    private func estimate(_ icon: AppIcon, value: String, unit: String) -> some View {
+        HStack(spacing: 4) {
+            Icon(icon, size: 18)
+            Text(value)
+                .font(.rounded(20, .heavy))
+                .foregroundStyle(Theme.ink)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+            Text(unit)
+                .font(.rounded(15, .medium))
+                .foregroundStyle(Theme.mute)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .cardStyle(radius: 20)
         .accessibilityElement(children: .combine)
     }
 
-    private var verdictCard: some View {
-        HStack(spacing: 8) {
-            BitView(mood: .happy, size: 78, animates: false)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(fit.verdict)
-                    .font(.rounded(17, .black))
+    private var bitCard: some View {
+        HStack(spacing: 10) {
+            BitView(mood: fit.exceedsCalorieGoal ? .oops : .happy, size: 64, animates: false)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(fit.headline)
+                    .font(.rounded(16, .heavy))
                     .foregroundStyle(Theme.ink)
-                Text(fit.verdictDetail)
-                    .font(.rounded(13, .bold))
-                    .foregroundStyle(Theme.mute)
+                Text(fit.detail)
+                    .font(.rounded(13, .medium))
+                    .foregroundStyle(Theme.ink.opacity(0.75))
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
         }
         .padding(.leading, 8)
-        .padding(.trailing, 16)
+        .padding(.trailing, 14)
         .padding(.vertical, 10)
-        .background(fit.exceedsCalorieGoal ? Theme.amberBackground : Theme.fitBackground, in: .rect(cornerRadius: 22))
+        .background(fit.exceedsCalorieGoal ? Theme.amberBackground : Theme.fitBackground, in: .rect(cornerRadius: 20))
         .accessibilityElement(children: .combine)
     }
 
-    private var fitCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("How it fits your day")
-                .font(.rounded(15, .black))
+    private var dayCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Your day if you add this meal")
+                .font(.rounded(15, .heavy))
                 .foregroundStyle(Theme.ink)
-            fitRow(
+            dayRow(
                 icon: .calories, title: "Calories",
                 total: (eatenCalories + meal.calories).formatted(), goal: "\(calorieGoal.formatted()) cal"
             )
             StackedBar(goal: Double(calorieGoal), eaten: Double(eatenCalories), meal: Double(meal.calories), showsOver: true)
-            fitRow(
+            dayRow(
                 icon: .protein, title: "Protein",
-                total: Int((eatenProtein + meal.protein).rounded()).formatted(), goal: "\(proteinGoal)g"
+                total: Int((eatenProtein + meal.protein).rounded()).formatted(), goal: "\(proteinGoal) g"
             )
+                .padding(.top, 4)
             StackedBar(goal: Double(proteinGoal), eaten: eatenProtein, meal: meal.protein, showsOver: false)
             HStack(spacing: 14) {
                 legend(Theme.blue, "Already eaten")
                 legend(Theme.blueSoft, "This meal")
+                if fit.exceedsCalorieGoal {
+                    legend(Theme.amber, "Over goal")
+                }
             }
+            .padding(.top, 2)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 12)
-        .padding(.bottom, 14)
-        .cardStyle()
+        .padding(16)
+        .cardStyle(radius: 20)
     }
 
-    private func fitRow(icon: AppIcon, title: String, total: String, goal: String) -> some View {
-        HStack(spacing: 8) {
-            Icon(icon, size: 16)
+    private func dayRow(icon: AppIcon, title: String, total: String, goal: String) -> some View {
+        HStack(spacing: 6) {
+            Icon(icon, size: 15)
             Text(title)
-                .font(.rounded(15, .heavy))
+                .font(.rounded(14, .semibold))
                 .foregroundStyle(Theme.ink)
             Spacer()
-            (Text(total).font(.rounded(15, .black)).foregroundStyle(Theme.ink)
-                + Text(" / \(goal)").font(.rounded(15, .bold)).foregroundStyle(Theme.mute))
+            (Text(total).font(.rounded(15, .heavy)).foregroundStyle(Theme.ink)
+                + Text(" / \(goal)").font(.rounded(14, .medium)).foregroundStyle(Theme.mute))
                 .monospacedDigit()
         }
         .accessibilityElement(children: .combine)
     }
 
     private func legend(_ color: Color, _ label: String) -> some View {
-        HStack(spacing: 6) {
-            Circle().fill(color).frame(width: 10, height: 10)
+        HStack(spacing: 5) {
+            Circle().fill(color).frame(width: 9, height: 9)
             Text(label)
-                .font(.rounded(12, .bold))
+                .font(.rounded(12, .medium))
                 .foregroundStyle(Theme.mute)
+        }
+    }
+
+    private var disclaimer: some View {
+        Label { Text(disclaimerText) } icon: {
+            Icon(.info, size: 12, color: draft.isLowConfidence ? Theme.amber : Theme.mute)
+        }
+        .font(.rounded(12, .medium))
+        .foregroundStyle(Theme.mute)
+        .padding(.horizontal, 4)
+    }
+
+    private var actionBar: some View {
+        HStack(spacing: 10) {
+            Button {
+                isEditing = true
+            } label: {
+                Label { Text("Edit") } icon: { Icon(.pencil, size: 16) }
+                    .padding(.horizontal, 18)
+            }
+            .buttonStyle(SecondaryButtonStyle(height: 56))
+            .fixedSize(horizontal: true, vertical: false)
+            .accessibilityLabel("Edit Meal")
+
+            Button("Add to Today", action: log)
+                .buttonStyle(PrimaryButtonStyle(height: 56))
+                .disabled(draft.components.allSatisfy { $0.scale == 0 })
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 4)
+        .background {
+            Theme.background
+                .shadow(color: Theme.ink.opacity(0.06), radius: 8, y: -4)
+                .ignoresSafeArea()
         }
     }
 
     private func chip(_ text: String, icon: AppIcon, foreground: Color, background: Color) -> some View {
         Label { Text(text) } icon: { Icon(icon, size: 11, color: foreground) }
             .labelStyle(.titleAndIcon)
-            .font(.rounded(12, .heavy))
+            .font(.rounded(12, .bold))
             .foregroundStyle(foreground)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
@@ -225,19 +260,18 @@ struct MealPreviewView: View {
 
     /// Included item names, such as "Grilled chicken breast, white rice".
     private var ingredients: String {
-        if photo == nil { return "Entered manually" }
         let names = draft.components.filter { $0.scale > 0 }.map { $0.name.lowercased() }
         let joined = names.joined(separator: ", ")
         return joined.prefix(1).uppercased() + joined.dropFirst()
     }
 
-    private var footnote: String {
+    private var disclaimerText: String {
         if draft.isLowConfidence {
-            return "Bit wasn't sure about this photo. Check the items in Edit Meal before adding it."
+            return "Bit wasn't sure about this photo. Check the items with Edit."
         }
-        let source = photo == nil ? "Based on what you entered" : "Estimated from your photo"
+        if photo == nil { return "Based on what you entered." }
         let edits = draft.components.contains(where: \.isEdited) ? ", with your edits" : ""
-        return "\(source)\(edits). Tap Edit Meal to adjust the portion or items."
+        return "Estimated from your photo\(edits). Values are approximate."
     }
 
     private func log() {

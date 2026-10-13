@@ -1,17 +1,17 @@
 import Foundation
 
 /// How a potential meal would change what's left of today's goals, plus a short
-/// plain-language explanation. Pure calculation so it updates instantly.
+/// plain-language explanation built from those numbers. Pure calculation so it
+/// updates instantly as the portion changes.
 struct GoalFit {
     let caloriesLeftBefore: Int
     let caloriesLeftAfter: Int
     let proteinLeftBefore: Double
     let proteinLeftAfter: Double
-    let explanation: String
-    /// Short verdict, such as "Great fit for today!".
-    let verdict: String
-    /// One line under the verdict.
-    let verdictDetail: String
+    /// What this meal does to today's calories, such as "Fits with 210 cal to spare".
+    let headline: String
+    /// What it does for protein, or how to make it fit.
+    let detail: String
 
     var exceedsCalorieGoal: Bool { caloriesLeftAfter < 0 }
 
@@ -27,44 +27,43 @@ struct GoalFit {
         caloriesLeftAfter = caloriesLeftBefore - mealCalories
         proteinLeftBefore = Double(proteinGoal) - eatenProtein
         proteinLeftAfter = proteinLeftBefore - mealProtein
-        let calorieSentence = Self.calorieSentence(leftBefore: caloriesLeftBefore, leftAfter: caloriesLeftAfter, meal: mealCalories)
-        explanation = [
-            calorieSentence,
-            Self.proteinSentence(leftBefore: proteinLeftBefore, meal: mealProtein),
-        ].joined(separator: " ")
+        headline = Self.headline(leftBefore: caloriesLeftBefore, leftAfter: caloriesLeftAfter, meal: mealCalories)
 
-        if caloriesLeftAfter < 0 {
-            verdict = "A bit over today’s goal"
-            verdictDetail = "\(calorieSentence) Good to know before you eat."
+        let proteinLine = Self.proteinLine(leftBefore: proteinLeftBefore, meal: mealProtein)
+        if caloriesLeftAfter < 0, caloriesLeftBefore > 0, mealCalories / 2 <= caloriesLeftBefore {
+            detail = "A smaller portion would keep you under. \(proteinLine)"
         } else {
-            let usesMostOfToday = caloriesLeftBefore > 0 && Double(mealCalories) / Double(caloriesLeftBefore) >= 0.8
-            verdict = usesMostOfToday ? "Fits, using most of today" : "Great fit for today!"
-            verdictDetail = mealProtein >= 25
-                ? "High protein choice that keeps you on track."
-                : "Leaves room for the rest of your day."
+            detail = proteinLine
         }
     }
 
-    private static func calorieSentence(leftBefore: Int, leftAfter: Int, meal: Int) -> String {
+    private static func headline(leftBefore: Int, leftAfter: Int, meal: Int) -> String {
         if leftBefore <= 0 {
-            return "You've already reached today's calorie goal, so this would add about \(roundedCalories(meal)) kcal over it."
+            return "You’ve already hit today’s calories"
         }
         if leftAfter < 0 {
-            return "This would put you about \(roundedCalories(-leftAfter)) kcal over today's goal."
+            return "Puts you about \(roundedCalories(-leftAfter)) cal over"
         }
-        let percent = roundedPercent(Double(meal) / Double(leftBefore))
-        if percent < 5 { return "This uses only a small part of your remaining calories." }
-        if percent >= 95 { return "This uses nearly all of your remaining calories." }
-        return "This uses about \(percent)% of your remaining calories."
+        if Double(meal) / Double(leftBefore) >= 0.8 {
+            return "Fits, but uses most of today"
+        }
+        return "Fits with \(leftAfter.formatted()) cal to spare"
     }
 
-    private static func proteinSentence(leftBefore: Double, meal: Double) -> String {
-        if leftBefore <= 0 { return "You've already reached your protein goal today." }
-        if meal < 1 { return "It adds almost no protein." }
-        if meal >= leftBefore { return "It would complete your protein goal for today." }
+    private static func proteinLine(leftBefore: Double, meal: Double) -> String {
+        let mealGrams = Int(meal.rounded())
+        if leftBefore <= 0 {
+            return "Your protein goal is already met today."
+        }
+        let neededGrams = Int(leftBefore.rounded())
+        if meal >= leftBefore {
+            return "Its \(mealGrams) g of protein completes today’s goal."
+        }
+        if meal < 5 {
+            return "Low in protein. You still need \(neededGrams) g today."
+        }
         let percent = roundedPercent(meal / leftBefore)
-        if percent < 5 { return "It adds a little protein." }
-        return "It covers about \(percent)% of the protein you still need."
+        return "Adds \(mealGrams) g protein, about \(percent)% of the \(neededGrams) g you still need."
     }
 
     /// Rounds to the nearest 10 kcal, matching the approximate nature of the numbers.
