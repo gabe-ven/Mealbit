@@ -13,7 +13,7 @@ struct MealAnalysisView: View {
     let onFinish: () -> Void
 
     @State private var draft: MealDraft?
-    @State private var errorMessage: String?
+    @State private var error: MealEstimateError?
 
     var body: some View {
         if let draft {
@@ -27,14 +27,16 @@ struct MealAnalysisView: View {
                     .frame(height: 280)
                     .clipShape(.rect(cornerRadius: 16))
 
-                if let errorMessage {
+                if let error {
                     ContentUnavailableView {
                         Label("Couldn't Estimate", systemImage: "exclamationmark.triangle")
                     } description: {
-                        Text(errorMessage)
+                        Text(error.localizedDescription)
                     } actions: {
-                        Button("Try Again") { self.errorMessage = nil }
-                            .buttonStyle(.borderedProminent)
+                        if error.canRetry {
+                            Button("Try Again") { self.error = nil }
+                                .buttonStyle(.borderedProminent)
+                        }
                     }
                 } else {
                     VStack(spacing: 12) {
@@ -56,8 +58,8 @@ struct MealAnalysisView: View {
                     Button("Cancel", action: onFinish)
                 }
             }
-            .task(id: errorMessage == nil) {
-                guard errorMessage == nil else { return }
+            .task(id: error == nil) {
+                guard error == nil else { return }
                 await estimate()
             }
         }
@@ -66,10 +68,10 @@ struct MealAnalysisView: View {
     private func estimate() async {
         do {
             draft = try await MealEstimator.estimate(from: photo)
-        } catch is CancellationError {
-            return
+        } catch let estimateError as MealEstimateError {
+            error = estimateError
         } catch {
-            errorMessage = "Check your connection and try again."
+            // Cancelled because the screen closed.
         }
     }
 }

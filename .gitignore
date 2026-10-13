@@ -11,7 +11,9 @@ build/
 .env
 *.secret
 Secrets.xcconfig
+.dev.vars
 
-# AI spike
+# Node (AI spike and proxy)
 node_modules/
+.wrangler/
 ai-spike/photos/

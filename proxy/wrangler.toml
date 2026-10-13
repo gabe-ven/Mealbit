@@ -1,0 +1,12 @@
+name = "mealbit-proxy"
+main = "src/index.js"
+compatibility_date = "2026-05-01"
+
+[vars]
+MODEL = "claude-opus-5-5"
+
+# At most 10 estimates per minute from one IP address.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }
