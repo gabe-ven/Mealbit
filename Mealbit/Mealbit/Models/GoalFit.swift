@@ -8,6 +8,10 @@ struct GoalFit {
     let proteinLeftBefore: Double
     let proteinLeftAfter: Double
     let explanation: String
+    /// Short verdict, such as "Great fit for today!".
+    let verdict: String
+    /// One line under the verdict.
+    let verdictDetail: String
 
     var exceedsCalorieGoal: Bool { caloriesLeftAfter < 0 }
 
@@ -23,10 +27,22 @@ struct GoalFit {
         caloriesLeftAfter = caloriesLeftBefore - mealCalories
         proteinLeftBefore = Double(proteinGoal) - eatenProtein
         proteinLeftAfter = proteinLeftBefore - mealProtein
+        let calorieSentence = Self.calorieSentence(leftBefore: caloriesLeftBefore, leftAfter: caloriesLeftAfter, meal: mealCalories)
         explanation = [
-            Self.calorieSentence(leftBefore: caloriesLeftBefore, leftAfter: caloriesLeftAfter, meal: mealCalories),
+            calorieSentence,
             Self.proteinSentence(leftBefore: proteinLeftBefore, meal: mealProtein),
         ].joined(separator: " ")
+
+        if caloriesLeftAfter < 0 {
+            verdict = "A bit over today’s goal"
+            verdictDetail = "\(calorieSentence) Good to know before you eat."
+        } else {
+            let usesMostOfToday = caloriesLeftBefore > 0 && Double(mealCalories) / Double(caloriesLeftBefore) >= 0.8
+            verdict = usesMostOfToday ? "Fits, using most of today" : "Great fit for today!"
+            verdictDetail = mealProtein >= 25
+                ? "High protein choice that keeps you on track."
+                : "Leaves room for the rest of your day."
+        }
     }
 
     private static func calorieSentence(leftBefore: Int, leftAfter: Int, meal: Int) -> String {

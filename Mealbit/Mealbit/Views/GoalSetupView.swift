@@ -1,193 +1,116 @@
 import SwiftUI
 
-/// First-launch flow that asks for the daily goals one page at a time.
+/// First launch: a welcome page, then the two daily goals.
 struct GoalSetupView: View {
-    private enum Step {
-        case calories, protein
-    }
-
     @AppStorage(NutritionGoals.caloriesKey) private var calorieGoal = NutritionGoals.defaultCalories
     @AppStorage(NutritionGoals.proteinKey) private var proteinGoal = NutritionGoals.defaultProtein
     @AppStorage(NutritionGoals.hasSetGoalsKey) private var hasSetGoals = false
 
-    @State private var path: [Step] = []
-    @State private var caloriesText = String(NutritionGoals.defaultCalories)
-    @State private var proteinText = String(NutritionGoals.defaultProtein)
+    @State private var isShowingGoals = false
+    @State private var calories = NutritionGoals.defaultCalories
+    @State private var protein = NutritionGoals.defaultProtein
 
     var body: some View {
-        NavigationStack(path: $path) {
+        NavigationStack {
             welcomePage
-                .navigationDestination(for: Step.self) { step in
-                    switch step {
-                    case .calories:
-                        GoalEntryPage(
-                            step: 1,
-                            title: "Daily\ncalories",
-                            unit: "kcal",
-                            range: NutritionGoals.calorieRange,
-                            buttonTitle: "Continue",
-                            text: $caloriesText
-                        ) { path.append(.protein) }
-                    case .protein:
-                        GoalEntryPage(
-                            step: 2,
-                            title: "Daily\nprotein",
-                            unit: "grams",
-                            range: NutritionGoals.proteinRange,
-                            buttonTitle: "Done",
-                            text: $proteinText,
-                            onContinue: save
-                        )
-                    }
-                }
+                .navigationDestination(isPresented: $isShowingGoals) { goalsPage }
         }
-        .tint(.white)
     }
 
     private var welcomePage: some View {
-        OnboardingPage {
-            VStack(alignment: .leading, spacing: 20) {
-                Spacer()
-                Text("Mealbit")
-                    .font(.title3.weight(.heavy))
-                    .foregroundStyle(.white.opacity(0.7))
-                Text("Know if it fits before you eat it.")
-                    .font(.system(size: 52, weight: .black))
-                    .foregroundStyle(.white)
+        VStack(spacing: 22) {
+            Spacer()
+            BitView(mood: .happy, size: 190)
+                .frame(width: 250, height: 250)
+                .background(Theme.card, in: .circle)
+                .shadow(color: Theme.blue.opacity(0.14), radius: 15, y: 10)
+            Wordmark(size: 50)
+                .padding(.top, 10)
+            Text("Snap your meal. See how it fits your day.")
+                .font(.rounded(28, .black))
+                .foregroundStyle(Theme.ink)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 320)
+            Spacer()
+            Button("Get Started") { isShowingGoals = true }
+                .buttonStyle(PrimaryButtonStyle(height: 62, fontSize: 21))
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Theme.soft)
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var goalsPage: some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .bottom, spacing: 10) {
+                BitView(mood: .happy, size: 84)
+                Text("Set your daily goals. You can change them anytime.")
+                    .font(.rounded(16, .heavy))
+                    .foregroundStyle(Theme.ink)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Set two daily goals. Then snap any meal to see how it fits.")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.8))
-                Spacer()
-                Spacer()
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(Theme.card, in: UnevenRoundedRectangle(
+                        topLeadingRadius: 20, bottomLeadingRadius: 6, bottomTrailingRadius: 20, topTrailingRadius: 20
+                    ))
+                    .raisedShadow()
+                    .padding(.bottom, 22)
             }
-        } button: {
-            OnboardingButton(title: "Get Started") { path.append(.calories) }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 8)
+
+            VStack(spacing: 14) {
+                GoalStepperCard(
+                    title: "Daily calories", dot: Theme.blue, value: $calories, unit: "kcal",
+                    range: NutritionGoals.calorieRange, step: 50
+                )
+                GoalStepperCard(
+                    title: "Daily protein", dot: Theme.orange, value: $protein, unit: "g",
+                    range: NutritionGoals.proteinRange, step: 5
+                )
+            }
+            .padding(.top, 18)
+
+            Spacer()
+
+            Button("Start Checking Meals") { save(calories: calories, protein: protein) }
+                .buttonStyle(PrimaryButtonStyle(height: 62, fontSize: 21))
+            Button("Skip and use defaults") {
+                save(calories: NutritionGoals.defaultCalories, protein: NutritionGoals.defaultProtein)
+            }
+            .buttonStyle(TextButtonStyle())
+            .padding(.top, 6)
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 8)
+        .background(Theme.background)
+        .navigationBarBackButtonHidden()
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                CircleButton(systemImage: "chevron.left") { isShowingGoals = false }
+                    .accessibilityLabel("Back")
+            }
         }
     }
 
-    private func save() {
-        guard let calories = GoalEntryPage.validNumber(caloriesText, in: NutritionGoals.calorieRange),
-              let protein = GoalEntryPage.validNumber(proteinText, in: NutritionGoals.proteinRange)
-        else { return }
+    private func save(calories: Int, protein: Int) {
         calorieGoal = calories
         proteinGoal = protein
         hasSetGoals = true
     }
 }
 
-/// One goal page: a bold title and a very large number to type.
-private struct GoalEntryPage: View {
-    let step: Int
-    let title: String
-    let unit: String
-    let range: ClosedRange<Int>
-    let buttonTitle: String
-    @Binding var text: String
-    let onContinue: () -> Void
-
-    @FocusState private var isFocused: Bool
-
-    static func validNumber(_ text: String, in range: ClosedRange<Int>) -> Int? {
-        guard let value = try? Int(text, format: .number), range.contains(value) else { return nil }
-        return value
-    }
-
-    private var isValid: Bool { Self.validNumber(text, in: range) != nil }
+/// "Meal" in navy and "bit" in blue.
+struct Wordmark: View {
+    let size: CGFloat
 
     var body: some View {
-        OnboardingPage {
-            VStack(alignment: .leading, spacing: 0) {
-                StepIndicator(current: step, total: 2)
-                    .padding(.top, 8)
-
-                Text(title)
-                    .font(.system(size: 52, weight: .black))
-                    .foregroundStyle(.white)
-                    .padding(.top, 32)
-
-                TextField("0", text: $text)
-                    .keyboardType(.numberPad)
-                    .focused($isFocused)
-                    .font(.system(size: 96, weight: .black, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(.white)
-                    .minimumScaleFactor(0.5)
-                    .padding(.top, 24)
-
-                Text(unit)
-                    .font(.title2.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.7))
-
-                Text(isValid || text.isEmpty
-                     ? "Between \(range.lowerBound) and \(range.upperBound)"
-                     : "Enter a number between \(range.lowerBound) and \(range.upperBound)")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white.opacity(isValid || text.isEmpty ? 0.6 : 1))
-                    .padding(.top, 16)
-
-                Spacer()
-            }
-        } button: {
-            OnboardingButton(title: buttonTitle, action: onContinue)
-                .disabled(!isValid)
-        }
-        .onAppear { isFocused = true }
-    }
-}
-
-/// Full-screen blue page with content on top and a button pinned at the bottom.
-private struct OnboardingPage<Content: View, ButtonContent: View>: View {
-    @ViewBuilder let content: Content
-    @ViewBuilder let button: ButtonContent
-
-    var body: some View {
-        content
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .padding(.horizontal, 28)
-            .background(Color.brand.ignoresSafeArea())
-            .safeAreaInset(edge: .bottom) {
-                button
-                    .padding(.horizontal, 28)
-                    .padding(.bottom, 12)
-            }
-            .toolbarBackground(.hidden, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-    }
-}
-
-private struct OnboardingButton: View {
-    let title: String
-    let action: () -> Void
-
-    @Environment(\.isEnabled) private var isEnabled
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.title3.weight(.heavy))
-                .foregroundStyle(Color.brand)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
-                .background(.white, in: .capsule)
-                .opacity(isEnabled ? 1 : 0.5)
-        }
-    }
-}
-
-private struct StepIndicator: View {
-    let current: Int
-    let total: Int
-
-    var body: some View {
-        HStack(spacing: 6) {
-            ForEach(1...total, id: \.self) { index in
-                Capsule()
-                    .fill(.white.opacity(index <= current ? 1 : 0.3))
-                    .frame(width: 32, height: 6)
-            }
-        }
-        .accessibilityLabel("Step \(current) of \(total)")
+        (Text("Meal").foregroundStyle(Theme.ink) + Text("bit").foregroundStyle(Theme.blue))
+            .font(.rounded(size, .black))
+            .tracking(-size * 0.02)
+            .accessibilityLabel("Mealbit")
     }
 }
 

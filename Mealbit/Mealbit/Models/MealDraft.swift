@@ -12,6 +12,8 @@ struct MealComponent: Identifiable, Hashable {
     var carbs: Double
     var fat: Double
     var scale = 1.0
+    /// True once the user has corrected this item by hand.
+    var isEdited = false
 
     var adjustedQuantity: Double { quantity * scale }
     var adjustedCalories: Double { calories * scale }

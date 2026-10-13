@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Corrects one item of a meal preview. Shows and returns the amounts as the
-/// user currently sees them; the returned component has a scale of 1.
+/// "Fix this item": corrects one item of a meal. Shows and returns the amounts as
+/// the user currently sees them; the returned item has a scale of 1.
 struct ComponentEditView: View {
     let onSave: (MealComponent) -> Void
 
@@ -46,52 +46,48 @@ struct ComponentEditView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Item name", text: $name)
-                        .textInputAutocapitalization(.sentences)
-                    HStack {
-                        Text("Amount")
-                        Spacer()
-                        TextField("0", text: $quantityText)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(maxWidth: 80)
-                        TextField("unit", text: $unit)
-                            .textInputAutocapitalization(.never)
-                            .frame(maxWidth: 70)
-                    }
+        ScrollView {
+            VStack(spacing: 12) {
+                SheetHeader(title: "Fix this item") { dismiss() }
+                InputField(label: "Item", text: $name, placeholder: "e.g. Chicken Burrito Bowl")
+                HStack(spacing: 12) {
+                    InputField(label: "Amount", text: $quantityText, keyboard: .decimalPad)
+                    InputField(label: "Unit", text: $unit)
                 }
-
-                Section {
-                    NumberField(title: "Calories", unit: "kcal", text: $caloriesText, keyboard: .numberPad)
-                    NumberField(title: "Protein", unit: "g", text: $proteinText)
-                    NumberField(title: "Carbs", unit: "g", text: $carbsText)
-                    NumberField(title: "Fat", unit: "g", text: $fatText)
-                } footer: {
-                    Text("Enter values for the amount above.")
+                HStack(spacing: 12) {
+                    InputField(
+                        label: "Calories (kcal)", text: $caloriesText, keyboard: .numberPad,
+                        border: Theme.blueSoft, fontSize: 22
+                    )
+                    InputField(
+                        label: "Protein (g)", text: $proteinText, keyboard: .decimalPad,
+                        border: Theme.orangeSoft, fontSize: 22
+                    )
                 }
+                HStack(spacing: 12) {
+                    InputField(label: "Carbs (g)", text: $carbsText, placeholder: "Optional", keyboard: .decimalPad)
+                    InputField(label: "Fat (g)", text: $fatText, placeholder: "Optional", keyboard: .decimalPad)
+                }
+                Button("Save") {
+                    guard let edited else { return }
+                    onSave(edited)
+                    dismiss()
+                }
+                .buttonStyle(PrimaryButtonStyle(height: 60, fontSize: 20))
+                .disabled(edited == nil)
+                .padding(.top, 6)
             }
-            .navigationTitle("Edit Item")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        guard let edited else { return }
-                        onSave(edited)
-                        dismiss()
-                    }
-                    .disabled(edited == nil)
-                }
-            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 30)
         }
+        .presentationDragIndicator(.visible)
+        .presentationBackground(Theme.background)
     }
 }
 
 #Preview {
-    ComponentEditView(component: MealDraft.sampleEstimate.components[0], onSave: { _ in })
+    Text("Edit Meal")
+        .sheet(isPresented: .constant(true)) {
+            ComponentEditView(component: MealDraft.sampleEstimate.components[0], onSave: { _ in })
+        }
 }
