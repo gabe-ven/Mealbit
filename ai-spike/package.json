@@ -1,0 +1,12 @@
+{
+  "name": "mealbit-ai-spike",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test-vision": "node --env-file=.env test-vision.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "zod": "^4.6.6"
+  }
+}
