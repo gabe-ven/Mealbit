@@ -64,7 +64,7 @@ struct DashboardView: View {
                     Button {
                         open { isEditingGoals = true }
                     } label: {
-                        Image(systemName: "gearshape.fill")
+                        Image(systemName: "target")
                             .foregroundStyle(Theme.mute)
                     }
                     .accessibilityLabel("Daily Goals")
