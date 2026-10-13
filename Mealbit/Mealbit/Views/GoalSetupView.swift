@@ -20,11 +20,7 @@ struct GoalSetupView: View {
     private var welcomePage: some View {
         VStack(spacing: 22) {
             Spacer()
-            BitView(mood: .happy, size: 190)
-                .frame(width: 250, height: 250)
-                .background {
-                    Circle().fill(Theme.card).shadow(color: Theme.blue.opacity(0.14), radius: 15, y: 10)
-                }
+            BitView(mood: .happy, size: 240)
             Wordmark(size: 50)
                 .padding(.top, 10)
             Text("Snap your meal. See how it fits your day.")
