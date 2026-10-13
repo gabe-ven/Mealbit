@@ -73,11 +73,6 @@ struct MealPreviewView: View {
         if let photo {
             FilledImage(image: Image(uiImage: photo), height: 150)
                 .clipShape(.rect(cornerRadius: 22))
-                .overlay(alignment: .topTrailing) {
-                    chip("Estimate", icon: .sparkles, foreground: .white, background: Theme.ink.opacity(0.7))
-                        .environment(\.colorScheme, .light)
-                        .padding(10)
-                }
                 .accessibilityHidden(true)
         } else {
             Icon(.meals, size: 36)
