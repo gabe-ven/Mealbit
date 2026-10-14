@@ -16,8 +16,9 @@ struct DashboardView: View {
     /// The meal logged most recently, celebrated until the user does something else.
     @State private var justAdded: Meal?
 
-    init() {
-        _meals = Query(filter: Meal.loggedToday(), sort: \.date, order: .reverse)
+    /// `day` is passed in so the list moves on to the new day at midnight.
+    init(day: Date = .now) {
+        _meals = Query(filter: Meal.loggedToday(day), sort: \.date, order: .reverse)
     }
 
     private var caloriesEaten: Int { meals.reduce(0) { $0 + $1.calories } }

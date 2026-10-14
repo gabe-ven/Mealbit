@@ -28,8 +28,9 @@ final class Meal {
     var fat: Double
     var date: Date
 
-    static func loggedToday() -> Predicate<Meal> {
-        let startOfToday = Calendar.current.startOfDay(for: .now)
+    /// Meals logged on the same calendar day as `day` (today by default).
+    static func loggedToday(_ day: Date = .now) -> Predicate<Meal> {
+        let startOfToday = Calendar.current.startOfDay(for: day)
         let startOfTomorrow = Calendar.current.date(byAdding: .day, value: 1, to: startOfToday)!
         return #Predicate<Meal> { $0.date >= startOfToday && $0.date < startOfTomorrow }
     }
