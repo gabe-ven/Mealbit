@@ -216,8 +216,14 @@ struct DashboardView: View {
                     }
                     .buttonStyle(.plain)
                 } else {
-                    VStack(spacing: 2) {
+                    VStack(spacing: 0) {
                         ForEach(meals) { meal in
+                            if meal.id != meals.first?.id {
+                                Rectangle()
+                                    .fill(Theme.line)
+                                    .frame(height: 1)
+                                    .padding(.horizontal, 16)
+                            }
                             Button {
                                 open { editingMeal = meal }
                             } label: {
@@ -226,8 +232,7 @@ struct DashboardView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 6)
+                    .padding(4)
                 }
             }
             .cardStyle(radius: 20)
