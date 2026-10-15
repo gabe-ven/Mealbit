@@ -6,13 +6,12 @@ enum AppIcon {
     case calories, protein, meals
     case camera, pencil, photo, goals, sparkles, info
     case home, progress, profile
-    case breakfast, lunch, dinner, snack
 
     var color: Color {
         switch self {
         case .calories: Theme.calories
         case .protein: Theme.protein
-        case .meals, .breakfast, .lunch, .dinner, .snack: Theme.meals
+        case .meals: Theme.meals
         default: Theme.blue
         }
     }
@@ -22,7 +21,7 @@ enum AppIcon {
         switch self {
         case .calories: "flame.fill"
         case .protein: nil
-        case .meals, .dinner: "fork.knife"
+        case .meals: "fork.knife"
         case .camera: "camera.fill"
         case .pencil: "pencil"
         case .photo: "photo.fill"
@@ -32,20 +31,6 @@ enum AppIcon {
         case .home: "house.fill"
         case .progress: "chart.bar.fill"
         case .profile: "person.fill"
-        case .breakfast: "cup.and.saucer.fill"
-        case .lunch: "takeoutbag.and.cup.and.straw.fill"
-        case .snack: "carrot.fill"
-        }
-    }
-}
-
-extension MealCategory {
-    var icon: AppIcon {
-        switch self {
-        case .breakfast: .breakfast
-        case .lunch: .lunch
-        case .dinner: .dinner
-        case .snack: .snack
         }
     }
 }
@@ -117,12 +102,6 @@ private struct FlexedArm: Shape {
             Icon(.home)
             Icon(.progress)
             Icon(.profile)
-        }
-        HStack {
-            Icon(.breakfast, size: 24)
-            Icon(.lunch, size: 24)
-            Icon(.dinner, size: 24)
-            Icon(.snack, size: 24)
         }
     }
     .padding()

@@ -197,8 +197,6 @@ struct DashboardView: View {
                         open { isCheckingMeal = true }
                     } label: {
                         HStack(spacing: 14) {
-                            Icon(.meals, size: 26)
-                                .frame(width: 40)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("No meals yet")
                                     .font(.rounded(15, .heavy))
