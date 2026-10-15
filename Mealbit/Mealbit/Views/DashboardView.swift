@@ -58,11 +58,13 @@ struct DashboardView: View {
             }
             .background(Theme.background)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Wordmark(size: 30)
-                        .fixedSize()
+                if #available(iOS 26, *) {
+                    // Keep the wordmark free of the iOS 26 glass bubble.
+                    ToolbarItem(placement: .topBarLeading) { wordmark }
+                        .sharedBackgroundVisibility(.hidden)
+                } else {
+                    ToolbarItem(placement: .topBarLeading) { wordmark }
                 }
-                .sharedBackgroundVisibility(.hidden)
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         open { isEditingGoals = true }
@@ -96,6 +98,11 @@ struct DashboardView: View {
                 GoalSetupView()
             }
         }
+    }
+
+    private var wordmark: some View {
+        Wordmark(size: 30)
+            .fixedSize()
     }
 
     private func openManualIfRequested() {

@@ -10,7 +10,7 @@ Built with Swift and SwiftUI for UC Davis ECS 191.
 ## Requirements
 
 - A Mac with **Xcode 27** or later
-- An iPhone or iOS Simulator running **iOS 27** or later
+- An iPhone or iOS Simulator running **iOS 18** or later
 - An internet connection for photo estimates (manual logging works offline)
 
 ## Build and run
@@ -23,8 +23,8 @@ Built with Swift and SwiftUI for UC Davis ECS 191.
    cd Mealbit
    open Mealbit/Mealbit.xcodeproj
    ```
-2. At the top of Xcode, choose an iPhone simulator running iOS 27 (for example,
-   iPhone 17 Pro).
+2. At the top of Xcode, choose an iPhone simulator running iOS 18 or later (for
+   example, iPhone 17 Pro).
 3. Press **⌘R** to build and run.
 
 The simulator has no camera, so use **Choose Photo** to pick a meal photo from
