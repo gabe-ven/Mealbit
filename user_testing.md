@@ -74,7 +74,7 @@
 
 ## 2. Patterns Across Users
 
-I noticed that most people had no problem going through the process of logging a meal by taking a picture. They thought it was straightforward and intuitive, with no real blockers that made the funcionality. 
+I noticed that most people had no problem going through the process of logging a meal by taking a picture. They thought it was straightforward and intuitive, with no real blockers that made the functionality hard to use. 
 I guess the only confusion really revolved around the first impression of what the app does on the landing screen, as they thought you just log a meal to see how it fits in your day, but maybe didn't know that it specifically tracks calories / macros.
 The main critcisms I got was the design aspect, and how the color scheme should be changed to be lighter (I have a light mode, it just wasn't on)
 
